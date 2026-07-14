@@ -57,14 +57,16 @@ a:hover {
   border-bottom: 1px solid var(--qb-border-soft) !important;
 }
 
-#header h1 {
+#header h1,
+.title-left {
   display: flex;
   min-width: 0;
   align-items: center;
   margin: 0;
 }
 
-#header h1 a.blogTitle {
+#header h1 a.blogTitle,
+.title-left .blogTitle {
   margin-left: 14px !important;
   color: #f0f4f9 !important;
   font-family: inherit !important;
@@ -503,7 +505,8 @@ body:has(#avatarImg) #content > div:first-child {
     height: 40px !important;
   }
 
-  #header h1 a.blogTitle {
+  #header h1 a.blogTitle,
+  .title-left .blogTitle {
     display: inline !important;
     max-width: 46vw;
     overflow: hidden;
@@ -583,7 +586,8 @@ body:has(#avatarImg) #content > div:first-child {
 }
 
 @media (max-width: 430px) {
-  #header h1 a.blogTitle {
+  #header h1 a.blogTitle,
+  .title-left .blogTitle {
     max-width: 38vw;
     font-size: 20px !important;
   }
