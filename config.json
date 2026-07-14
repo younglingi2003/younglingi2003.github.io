@@ -13,5 +13,6 @@
   "urlMode": "pinyin",
   "onePageListNum": 10,
   "showPostSource": 1,
-  "needComment": 0
+  "needComment": 0,
+  "script": "<script src='https://blog.meekdai.com/Gmeek/plugins/GmeekTOC.js'></script>"
 }
