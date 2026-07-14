@@ -84,18 +84,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <h2>1. 论文想解决什么问题？</h2>
 <p>传统大模型回答问题时，主要有两种极端。</p>
 <h3>极端一：只依赖模型内部知识</h3>
-<p>例如问：</p>
-<blockquote>
-<p>花旗银行成立那一年，美国总统是谁？</p>
-</blockquote>
-<p>模型需要先知道花旗银行成立于哪一年，再确定当年的美国总统。</p>
-<p>如果模型内部记错了花旗银行的成立年份，后面的推理即使完全正确，最终答案还是错的。</p>
 <h3>极端二：遇到每一步都搜索</h3>
-<p>RAG 或搜索智能体可以调用外部检索器，但经过 RL 训练后，模型可能发现：</p>
-<blockquote>
-<p>搜索通常比依赖自己的记忆更保险。</p>
-</blockquote>
-<p>于是它开始无论什么问题都搜索。</p>
 <p>R1-Searcher++试图找到中间状态：</p>
 <blockquote>
 <p><strong>知道的部分直接使用内部知识，不确定的部分才搜索；搜索到的重要知识还要尽量记住。</strong></p>
@@ -141,14 +130,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <hr>
 <h2>3. 第一阶段：SFT Cold-Start</h2>
 <h3>3.1 为什么需要冷启动？</h3>
-<p>如果直接对原始模型做 RL，模型一开始甚至不知道：</p>
-<ul>
-<li>如何生成搜索查询；</li>
-<li>如何调用检索器；</li>
-<li>如何区分内部知识和搜索结果；</li>
-<li>如何输出规定格式。</li>
-</ul>
-<p>搜索动作空间又比普通问答复杂，因此纯 RL 的初期探索很容易产生大量无效轨迹。</p>
+<p>模型一开始什么都不知道，纯 RL 的初期探索很容易产生大量无效轨迹。</p>
 <p>作者先让基础模型自己生成回答，然后通过拒绝采样，只保留：</p>
 <ul>
 <li>最终答案正确；</li>
@@ -221,15 +203,7 @@ $$</p>
 <p>这是一个比较简单直接的防止 reward hacking 的办法。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
 <h3>我的看法</h3>
 <p>这个设计在短答案多跳问答中有效，但非常依赖任务形式。</p>
-<p>如果任务变成：</p>
-<ul>
-<li>开放式解释；</li>
-<li>证据引用；</li>
-<li>长答案生成；</li>
-<li>科学问答；</li>
-<li>报告撰写；</li>
-</ul>
-<p>“十个词以内”显然不再适用。因此它更像是针对当前 benchmark 的工程约束，而不是普适的答案奖励。</p>
+<p>“十个词以内”像是针对当前 benchmark 的工程约束，而不是普适的答案奖励。</p>
 <hr>
 <h2>7. Group Reward：奖励“正确且搜索较少”的轨迹</h2>
 <p>这是论文最有意思的设计之一。</p>
@@ -278,12 +252,6 @@ R=R_{\text{answer}}-\lambda \times \text{搜索次数}
 $$</p>
 <p>模型可能学会完全不搜索。</p>
 <p>R1-Searcher++的逻辑是：</p>
-<ol>
-<li>首先必须答对；</li>
-<li>然后才比较正确轨迹之间的搜索次数；</li>
-<li>只奖励其中搜索较少的轨迹。</li>
-</ol>
-<p>所以它优化的是：</p>
 <blockquote>
 <p><strong>在保证正确的前提下，尽量少搜索。</strong></p>
 </blockquote>
@@ -338,48 +306,12 @@ $(\mu)$：控制记忆训练的强度。</li>
 </ul>
 <p>论文中设定 (\mu=0.1)，避免 SFT 记忆损失过强，导致模型再次变成只依赖内部知识。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
 <hr>
-<h2>9. 整体训练过程举例</h2>
-<p>仍然使用问题：</p>
-<blockquote>
-<p>Avatar 和 Titanic 哪个更早上映？</p>
-</blockquote>
-<p>一次完整训练可能如下。</p>
-<h3>第一步：生成多条轨迹</h3>
-<p><strong>轨迹A</strong></p>
-<pre lang="text" class="notranslate"><code class="notranslate">搜索 Avatar 上映年份
-搜索 Titanic 上映年份
-答案：Titanic
-</code></pre>
-<p>搜索2次，正确。</p>
-<p><strong>轨迹B</strong></p>
-<pre lang="text" class="notranslate"><code class="notranslate">内部知识：Avatar 2009年上映
-搜索 Titanic 上映年份
-答案：Titanic
-</code></pre>
-<p>搜索1次，正确。</p>
-<p><strong>轨迹C</strong></p>
-<pre lang="text" class="notranslate"><code class="notranslate">内部知识：Avatar 2009年上映
-内部知识：Titanic 1999年上映
-答案：Titanic
-</code></pre>
-<p>搜索0次，虽然答案碰巧正确，但中间事实错误。</p>
-<h3>第二步：计算奖励</h3>
-<ul>
-<li>A：获得答案奖励；</li>
-<li>B：获得答案奖励和较少搜索的 group reward；</li>
-<li>C：如果奖励只看最终答案，也可能获得答案奖励。</li>
-</ul>
-<p>这里暴露出结果奖励的一个问题：它不检查中间证据是否正确。后面审稿意见会重点讨论这一点。</p>
-<h3>第三步：知识内部化</h3>
-<p>系统提取 B 中搜索到的“Titanic 1997年上映”，改写成内部知识轨迹，再通过 NLL 损失训练模型。</p>
-<p>作者希望模型以后遇到相似问题时，可以直接调用这一知识。</p>
-<hr>
-<h2>10. 我对核心思想的总体评价</h2>
+<h2>9. 我对核心思想的总体评价</h2>
 <p>这篇论文最值得肯定的地方，是明确指出了当前搜索智能体的一个真实问题：</p>
 <blockquote>
 <p><strong>搜索能力越强，不等于搜索行为越合理。</strong></p>
 </blockquote>
-<p>很多 Agentic RAG 工作只看最终准确率，默认“多搜总比少搜好”。R1-Searcher++开始明确优化：</p>
+<p>R1-Searcher++开始明确优化：</p>
 <p>$$
 \text{答案质量}+\text{搜索效率}+\text{知识复用}
 $$</p>
@@ -662,104 +594,6 @@ $$</p>
 <h1>Step 3：顶会审稿意见</h1>
 <h2>优点</h2>
 <p>论文抓住了搜索智能体中的重要问题：<strong>检索并不是越多越好</strong>。方法将答案奖励、搜索效率奖励和知识内部化结合起来，思路清晰，工程上可实现。实验也显示，在维持相近回答质量的同时，搜索次数可以显著下降。</p>
-<hr>
-<h2>意见一：论文没有真正证明“知识获取与记忆”</h2>
-<p>这是最核心的问题。</p>
-<p>所谓 external knowledge memorization，本质上是：</p>
-<ol>
-<li>从成功搜索轨迹中提取文档；</li>
-<li>使用 rewriting model 生成无搜索轨迹；</li>
-<li>再使用 NLL/SFT 训练策略模型。</li>
-</ol>
-<p>这更像在线自蒸馏，而不是被严格验证的持续知识获取。</p>
-<p>现有消融只能证明辅助训练数据有用，无法回答：</p>
-<ul>
-<li>模型具体记住了哪些新事实？</li>
-<li>经过多少后续更新仍能保留？</li>
-<li>是否能在改写问题、组合问题中调用？</li>
-<li>是否只是记住训练问题的答案模板？</li>
-<li>新知识是否破坏已有知识？</li>
-<li>如果搜索结果错误或过时，模型是否会永久记错？</li>
-</ul>
-<p>作者应增加明确的 acquire–retain–recall 实验：</p>
-<ol>
-<li>选择基础模型确定不知道的新事实；</li>
-<li>让模型通过搜索获得这些事实；</li>
-<li>后续禁止搜索；</li>
-<li>测试原问题、改写问题和组合推理问题；</li>
-<li>在继续训练若干轮后再次测试遗忘；</li>
-<li>注入冲突知识，测试更新与纠错能力。</li>
-</ol>
-<p>没有这些实验，“持续丰富内部知识”的核心表述缺乏充分证据。</p>
-<hr>
-<h2>意见二：准确率与效率结论不够严格，复现性也不足</h2>
-<p>论文主要优势体现在 LLM-as-Judge 和搜索次数上，但平均F1为45.3，实际上略低于 R1-Searcher 的45.6。因此“超越强基线”高度依赖 GPT-4o-mini Judge，而不是所有客观指标都更好。测试集又主要由三个数据集各随机抽取500条组成，论文没有报告多次随机种子、置信区间或显著性检验。(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</p>
-<p>此外，“效率”只使用搜索次数衡量，没有报告：</p>
-<ul>
-<li>总生成 token；</li>
-<li>检索延迟；</li>
-<li>rewriting model 训练成本；</li>
-<li>16次 rollout 的训练成本；</li>
-<li>Google API 与 GPT-4o-mini 摘要成本；</li>
-<li>端到端准确率—成本 Pareto 曲线。</li>
-</ul>
-<p>截至当前，官方仓库 README 仍将模型、训练数据和 Quick Start 标记为“coming soon”，仓库也未提供论文所需的完整训练复现流程，这明显削弱了可验证性。(<a href="https://github.com/RUCAIBox/R1-Searcher-plus" title="GitHub - RUCAIBox/R1-Searcher-plus: R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning · GitHub">GitHub</a>)</p>
-<hr>
-<h2>三个有研究价值的问题</h2>
-<h3>1. 如何学习真正基于不确定性的搜索决策？</h3>
-<p>当前方法奖励“正确轨迹中搜索最少的一个”，但搜索需求并不等于搜索次数。</p>
-<p>更合理的方向是让模型显式估计：</p>
-<h1>$$<br>
-\text{搜索价值}</h1>
-<h2>P(\text{搜索后纠正答案})</h2>
-<p>\text{搜索成本}<br>
-$$</p>
-<p>也就是学习 Value of Information：</p>
-<ul>
-<li>当前内部答案置信度多高？</li>
-<li>搜索可能带来多少信息增益？</li>
-<li>是否需要核验而不是补充知识？</li>
-<li>再搜索一次是否仍值得？</li>
-</ul>
-<p>这可能比“正确且最少搜索”更适合真实环境。</p>
-<h3>2. 如何实现可纠错、可追溯的参数化记忆？</h3>
-<p>把网络内容直接写进参数存在严重风险：</p>
-<ul>
-<li>信息可能错误；</li>
-<li>信息可能过时；</li>
-<li>不同来源可能冲突；</li>
-<li>写入后难以知道出处；</li>
-<li>删除或更新非常困难。</li>
-</ul>
-<p>值得研究一种混合记忆机制：</p>
-<pre lang="text" class="notranslate"><code class="notranslate">短期外部记忆
-    ↓ 多次验证
-候选长期记忆
-    ↓ 可信度、时效性、来源检查
-参数化或结构化长期记忆
-</code></pre>
-<p>同时为每条知识保留来源、时间戳和置信度，使模型能够更新或撤销记忆。</p>
-<h3>3. 如何联合优化“搜索、验证、记忆和遗忘”？</h3>
-<p>当前流程将搜索策略和知识内部化简单地组合在一起，但四个过程实际上相互影响：</p>
-<ul>
-<li>搜索决定获得什么知识；</li>
-<li>验证决定知识是否可信；</li>
-<li>记忆决定哪些信息进入长期状态；</li>
-<li>遗忘决定旧知识何时被替换。</li>
-</ul>
-<p>一个更完整的问题是把它们建模成长期决策过程：</p>
-<p>$$
-\text{Search}
-\rightarrow
-\text{Verify}
-\rightarrow
-\text{Store}
-\rightarrow
-\text{Reuse}
-\rightarrow
-\text{Update/Forget}
-$$</p>
-<p>奖励不仅考虑当前问题是否答对，还考虑这条知识对未来任务的长期收益。这会比当前单轮问答 RL 更接近真正的自进化智能体。</p>
 <hr>
 <h2>最终判断</h2>
 <h3><strong>Weak Reject / Borderline Reject</strong></h3>
