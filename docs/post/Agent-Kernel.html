@@ -231,13 +231,13 @@ $$</p>
 <p>最终答案超过10个词，一律视为错误。</p>
 </blockquote>
 <p>于是答案奖励为：</p>
-<p>$$<br>
-R_{\text{answer}}=<br>
-\begin{cases}<br>
-1,&amp;\text{答案不超过10词，且包含参考答案}<br>
-0,&amp;\text{其他情况}<br>
-\end{cases}<br>
-%%</p>
+<p>$$
+R_{\text{answer}}=
+\begin{cases}
+1,&amp;\text{答案不超过10词，且包含参考答案} \\
+0,&amp;\text{其他情况}
+\end{cases}
+$$</p>
 <p>这是一个比较简单直接的防止 reward hacking 的办法。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
 <h3>我的看法</h3>
 <p>这个设计在短答案多跳问答中有效，但非常依赖任务形式。</p>
@@ -745,11 +745,11 @@ $$</p>
 <h3>1. 如何学习真正基于不确定性的搜索决策？</h3>
 <p>当前方法奖励“正确轨迹中搜索最少的一个”，但搜索需求并不等于搜索次数。</p>
 <p>更合理的方向是让模型显式估计：</p>
-<h1>[<br>
+<h1>$$<br>
 \text{搜索价值}</h1>
 <h2>P(\text{搜索后纠正答案})</h2>
 <p>\text{搜索成本}<br>
-]</p>
+$$</p>
 <p>也就是学习 Value of Information：</p>
 <ul>
 <li>当前内部答案置信度多高？</li>
