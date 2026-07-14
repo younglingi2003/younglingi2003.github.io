@@ -14,5 +14,5 @@
   "onePageListNum": 10,
   "showPostSource": 1,
   "needComment": 0,
-  "script": "<script src='https://blog.meekdai.com/Gmeek/plugins/GmeekTOC.js'></script>"
+  "script": "<script src='https://younglingi2003.github.io/collapsible-toc.js'></script>"
 }
