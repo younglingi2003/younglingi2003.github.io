@@ -13,6 +13,6 @@
   "urlMode": "pinyin",
   "onePageListNum": 10,
   "showPostSource": 1,
-  "needComment": 0,
+  "needComment": 1,
   "script": "<script src='https://younglingi2003.github.io/collapsible-toc.js'></script>"
 }
