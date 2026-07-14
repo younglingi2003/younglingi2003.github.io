@@ -234,7 +234,7 @@ $$</p>
 <p>$$<br>
 R_{\text{answer}}=<br>
 \begin{cases}<br>
-1,&amp;\text{答案不超过10词，且包含参考答案} \<br>
+1,&amp;\text{答案不超过10词，且包含参考答案}<br>
 0,&amp;\text{其他情况}<br>
 \end{cases}<br>
 %%</p>
@@ -356,9 +356,12 @@ L(\theta)=-J_{\text{RL}}(\theta)+\mu L_{\text{memory}}(\theta)
 $$</p>
 <p>其中：</p>
 <ul>
-<li>(J_{\text{RL}})：让模型探索并学习搜索策略；</li>
-<li>(L_{\text{memory}})：让模型记住搜索得到的知识；</li>
-<li>(\mu)：控制记忆训练的强度。</li>
+<li>
+$(J_{\text{RL}})$：让模型探索并学习搜索策略；</li>
+<li>
+$(L_{\text{memory}})$：让模型记住搜索得到的知识；</li>
+<li>
+$(\mu)$：控制记忆训练的强度。</li>
 </ul>
 <p>论文中设定 (\mu=0.1)，避免 SFT 记忆损失过强，导致模型再次变成只依赖内部知识。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
 <hr>
