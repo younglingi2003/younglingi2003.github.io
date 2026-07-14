@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark-blue" data-light-theme="dark" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://github.com/younglingi2003.png">
+<meta name="description" content="# 论文信息
+
+**Agent-Kernel: A MicroKernel Multi-Agent System Framework for Adaptive Social Simulation Powered by LLMs**
+
+论文于 **2025 年 12 月 1 日**提交到 arXiv，目前页面显示为 v1，代码已经开源。">
+<meta property="og:title" content="Agent-Kernel">
+<meta property="og:description" content="# 论文信息
+
+**Agent-Kernel: A MicroKernel Multi-Agent System Framework for Adaptive Social Simulation Powered by LLMs**
+
+论文于 **2025 年 12 月 1 日**提交到 arXiv，目前页面显示为 v1，代码已经开源。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://younglingi2003.github.io/post/Agent-Kernel.html">
+<meta property="og:image" content="https://github.com/younglingi2003.png">
+<title>Agent-Kernel</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">Agent-Kernel</h1>
+<div class="title-right">
+    <a href="https://younglingi2003.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/younglingi2003/younglingi2003.github.io/issues/1" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题"style="display:none;">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><h1>论文信息</h1>
+<p><strong>Agent-Kernel: A MicroKernel Multi-Agent System Framework for Adaptive Social Simulation Powered by LLMs</strong></p>
+<p>论文于 <strong>2025 年 12 月 1 日</strong>提交到 arXiv，目前页面显示为 v1，代码已经开源。它不是一篇提出新模型或新训练算法的论文，而是一篇偏向<strong>多智能体基础设施、分布式系统和软件架构</strong>的工作。(<a href="https://arxiv.org/abs/2512.01610" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h1>Step 1：详细、通俗讲解</h1>
+<h2>1. 一句话概括</h2>
+<p>这篇论文想做的是：</p>
+<blockquote>
+<p>不再把每个 Agent 写成一个“什么都自己管理”的大型对象，而是建立一个类似操作系统微内核的公共底座，把 Agent、环境、动作、通信、时钟、日志和权限控制拆开，通过插件动态组装社会模拟。</p>
+</blockquote>
+<p>它真正解决的不是“Agent 如何推理得更聪明”，而是：</p>
+<ul>
+<li>如何同时管理上千、上万个 Agent；</li>
+<li>如何在运行中出生、死亡、迁移或新增 Agent；</li>
+<li>如何动态改变环境和社会规则；</li>
+<li>如何阻止 Agent 执行非法动作；</li>
+<li>如何让不同社会模拟复用同一套基础代码。</li>
+</ul>
+<p>论文将这些需求概括为四个词：<strong>适应性、可配置性、可靠性和可复用性</strong>。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h2>2. 现有 Multi-Agent 框架有什么问题？</h2>
+<p>作者认为，AgentScope、AutoGen、CAMEL、AgentSociety 等框架，大体可以分成两类。</p>
+<h3>第一类：Pipeline 架构</h3>
+<p>例如：</p>
+<p>[<br>
+\text{Planner} \rightarrow \text{Agent A} \rightarrow \text{Agent B} \rightarrow \text{Tool}<br>
+]</p>
+<p>中央 Planner 事先定义好有哪些 Agent、消息怎么流动、每个 Agent 干什么。</p>
+<p>问题是：这个流程通常比较静态。</p>
+<p>假设模拟过程中突然出生了一个新 Agent，就可能需要修改：</p>
+<ul>
+<li>Planner 中的 Agent 列表；</li>
+<li>其他 Agent 的联系人列表；</li>
+<li>消息路由；</li>
+<li>权限配置；</li>
+<li>环境状态。</li>
+</ul>
+<p>因此它适合任务协作，却不太适合人口不断变化的动态社会。</p>
+<h3>第二类：Layered 架构</h3>
+<p>例如：</p>
+<ul>
+<li>Agent 层；</li>
+<li>社会关系层；</li>
+<li>消息层；</li>
+<li>数据库层。</li>
+</ul>
+<p>虽然代码按层拆开了，但很多环境和动作信息仍然绑定在 Agent 身上。比如每个 Agent 内部都保存自己的地图、关系表和可用动作。</p>
+<p>新增一个 Agent 时，其他 Agent 的内部状态可能仍然需要同步修改。</p>
+<p>作者认为，问题的根源是：</p>
+<blockquote>
+<p>现有框架主要是 <strong>agent-centric，以 Agent 为中心</strong>；而社会模拟需要的是 <strong>society-centric，以整个社会为中心</strong>。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+</blockquote>
+<hr>
+<h1>3. 微内核思想到底是什么？</h1>
+<p>操作系统中的微内核思想是：内核只保留最基本、最稳定的机制，把文件系统、驱动等具体功能放到内核外的服务中。</p>
+<p>Agent-Kernel借用了这个思想：</p>
+<h2>内核负责稳定的“机制”</h2>
+<p>例如：</p>
+<ul>
+<li>插件注册；</li>
+<li>模块间通信；</li>
+<li>全局时间；</li>
+<li>消息传递；</li>
+<li>行为验证；</li>
+<li>日志记录；</li>
+<li>Agent 生命周期管理；</li>
+<li>分布式部署。</li>
+</ul>
+<h2>插件负责变化的“策略和业务逻辑”</h2>
+<p>例如：</p>
+<ul>
+<li>Agent 如何感知；</li>
+<li>如何规划；</li>
+<li>如何反思；</li>
+<li>地图是什么样；</li>
+<li>社会关系如何变化；</li>
+<li>有哪些动作；</li>
+<li>吃饭、睡觉、上课、生育分别如何实现。</li>
+</ul>
+<p>因此，同一个内核可以运行：</p>
+<ul>
+<li>老鼠社会；</li>
+<li>大学校园；</li>
+<li>医院；</li>
+<li>城市交通；</li>
+<li>信息传播；</li>
+<li>灾害响应。</li>
+</ul>
+<p>只需要替换对应插件，而不是重写整个框架。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<h3>我的看法</h3>
+<p>这个思想本身不算全新的计算机系统思想，核心仍然是：</p>
+<ul>
+<li>微内核；</li>
+<li>插件系统；</li>
+<li>Mediator 模式；</li>
+<li>Facade 模式；</li>
+<li>依赖注入；</li>
+<li>database-per-service；</li>
+<li>Ray Actor。</li>
+</ul>
+<p>但是，把这些系统设计<strong>系统性地应用到 LLM 社会模拟</strong>，并且明确提出“社会中心而非 Agent 中心”，是这篇论文比较有价值的地方。</p>
+<p>它的创新更像是：</p>
+<blockquote>
+<p>找到了一个适合 LLM 社会模拟的系统抽象，而不是发明了一种新的底层算法。</p>
+</blockquote>
+<hr>
+<h1>4. 五个核心模块</h1>
+<p>Agent-Kernel的内核由五个模块组成：</p>
+<p>[<br>
+\text{Agent}+\text{Environment}+\text{Action}+\text{Controller}+\text{System}<br>
+]</p>
+<hr>
+<h2>4.1 Agent Module：只负责“认知主体”</h2>
+<p>Agent 模块不再保存完整世界，只维护与个体自身有关的内容：</p>
+<ul>
+<li>身份 Profile；</li>
+<li>动态状态 State；</li>
+<li>感知 Perceive；</li>
+<li>规划 Plan；</li>
+<li>执行转换 Invoke；</li>
+<li>反思 Reflect。</li>
+</ul>
+<p>典型认知循环是：</p>
+<p>[<br>
+\text{Perceive}<br>
+\rightarrow<br>
+\text{Plan}<br>
+\rightarrow<br>
+\text{Invoke}<br>
+\rightarrow<br>
+\text{State Update}<br>
+\rightarrow<br>
+\text{Reflect}<br>
+]</p>
+<p>例如学生 Alice：</p>
+<ol>
+<li>感知到“上午十点有课”；</li>
+<li>LLM 生成计划“去教室”；</li>
+<li>Invoke 将自然语言计划解析为 <code class="notranslate">move(classroom)</code>；</li>
+<li>Action 模块执行移动；</li>
+<li>State 更新 Alice 的位置、体力和情绪；</li>
+<li>Reflect 把这段经历压缩成记忆。</li>
+</ol>
+<p>论文中真正主要使用 LLM 的地方是 Plan Plugin，以及部分反思和记忆生成；移动、状态更新、权限验证等仍由确定性的程序完成。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>这是一项很重要的设计：</p>
+<blockquote>
+<p>LLM 负责“想做什么”，程序负责“能不能做、怎么做、做完发生什么”。</p>
+</blockquote>
+<p>否则，假如让 LLM 同时决定动作和物理后果，很容易出现：</p>
+<ul>
+<li>瞬移；</li>
+<li>使用不存在的工具；</li>
+<li>进入不存在的建筑；</li>
+<li>重复扣除资源；</li>
+<li>死亡 Agent 继续行动。</li>
+</ul>
+<hr>
+<h2>4.2 Environment Module：唯一的客观世界</h2>
+<p>Environment 是整个社会共享的“世界状态”，主要包含：</p>
+<h3>Space Plugin</h3>
+<p>负责：</p>
+<ul>
+<li>地图；</li>
+<li>建筑；</li>
+<li>Agent 位置；</li>
+<li>邻居查询；</li>
+<li>空间移动；</li>
+<li>静态和动态实体。</li>
+</ul>
+<h3>Relation Plugin</h3>
+<p>负责：</p>
+<ul>
+<li>好友关系；</li>
+<li>师生关系；</li>
+<li>同事关系；</li>
+<li>亲属关系；</li>
+<li>关系强度；</li>
+<li>社会网络动态更新。</li>
+</ul>
+<p>过去可能每个 Agent 都保存一份地图和联系人列表。Agent-Kernel只保留一份权威环境。</p>
+<p>例如新增一座图书馆，只需要修改 Space Plugin；所有 Agent 下一次感知时就能看到它。</p>
+<p>新增一个 Agent 也只需要在环境和关系插件中注册，不必修改其他所有 Agent。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<h3>我的看法</h3>
+<p>这一点其实是整篇论文最核心的设计。</p>
+<p>它把：</p>
+<p>[<br>
+\text{Agent拥有世界}<br>
+]</p>
+<p>改成：</p>
+<p>[<br>
+\text{Agent查询共享世界}<br>
+]</p>
+<p>这类似数据库系统中的“单一事实来源”。它确实有利于动态人口、关系更新和一致性管理。</p>
+<hr>
+<h2>4.3 Action Module：社会共享的能力集合</h2>
+<p>动作也不再硬编码在 Agent 内部，而是放在统一的 Action Module 中。</p>
+<p>主要包括三类插件：</p>
+<h3>Communication Plugin</h3>
+<p>负责：</p>
+<ul>
+<li>消息封装；</li>
+<li>消息发送；</li>
+<li>消息存储；</li>
+<li>消息查询；</li>
+<li>Agent 之间交流。</li>
+</ul>
+<h3>Tools Plugin</h3>
+<p>负责调用工具，包括：</p>
+<ul>
+<li>本地 Python 函数；</li>
+<li>远程服务；</li>
+<li>MCP 工具。</li>
+</ul>
+<h3>Other-Actions Plugin</h3>
+<p>负责社会模拟中的普通行为，例如：</p>
+<ul>
+<li>移动；</li>
+<li>吃饭；</li>
+<li>睡觉；</li>
+<li>上课；</li>
+<li>工作；</li>
+<li>生育；</li>
+<li>攻击。</li>
+</ul>
+<p>动作方法还可以通过注解区分：</p>
+<ul>
+<li>Agent 可以直接调用的动作；</li>
+<li>只有系统可以调用的管理接口。</li>
+</ul>
+<p>这相当于初步的权限控制。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h2>4.4 Controller Module：系统调用入口和“裁判”</h2>
+<p>Controller 是整个系统的中介者。</p>
+<p>Agent 不能直接修改 Environment，而必须经过 Controller：</p>
+<p>[<br>
+\text{Agent Request}<br>
+\rightarrow<br>
+\text{Controller Validation}<br>
+\rightarrow<br>
+\text{Action/Environment}<br>
+]</p>
+<p>例如 Agent 想进入一栋建筑：</p>
+<ol>
+<li>Plan 输出“进入实验室”；</li>
+<li>Invoke 生成对应动作请求；</li>
+<li>Controller 检查实验室是否存在；</li>
+<li>检查 Agent 是否有权限进入；</li>
+<li>检查路径或开放时间；</li>
+<li>验证通过后才执行。</li>
+</ol>
+<p>Controller还有第二项功能：<strong>运行时干预</strong>。</p>
+<p>研究者可以在模拟中途：</p>
+<ul>
+<li>修改某个 Agent 的状态；</li>
+<li>增加社会关系；</li>
+<li>关闭建筑；</li>
+<li>广播突发事件；</li>
+<li>改变规则；</li>
+<li>向某些 Agent 发出警告。</li>
+</ul>
+<p>所以它既像操作系统的系统调用入口，也像实验控制台。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<h3>需要注意</h3>
+<p>论文将这称为“可靠性”，但它主要保证的是：</p>
+<ul>
+<li>动作是否合法；</li>
+<li>状态是否符合预定义规则；</li>
+<li>系统是否不容易崩溃。</li>
+</ul>
+<p>它并不能保证：</p>
+<ul>
+<li>Agent 的判断是真实的；</li>
+<li>社会行为符合真人；</li>
+<li>LLM 没有语义幻觉；</li>
+<li>最终社会结论科学可信。</li>
+</ul>
+<p>因此，<strong>执行可靠性不等于模拟有效性</strong>。</p>
+<hr>
+<h2>4.5 System Module：时间、通信与记录</h2>
+<p>System Module包含三项全局服务。</p>
+<h3>Timer</h3>
+<p>所有 Agent 使用统一的 Tick。</p>
+<p>否则可能出现：</p>
+<ul>
+<li>Agent A 已经来到第二天；</li>
+<li>Agent B 还停留在第一天；</li>
+<li>B 收到来自“未来”的消息。</li>
+</ul>
+<p>全局时钟可以控制模拟中的因果顺序。</p>
+<h3>Messager</h3>
+<p>Agent 不直接同步等待对方回复，而是将消息发送到异步消息系统。</p>
+<p>这样可以避免：</p>
+<ul>
+<li>A 等 B；</li>
+<li>B 等 C；</li>
+<li>C 又等 A；</li>
+</ul>
+<p>最终形成通信死锁。</p>
+<h3>Recorder</h3>
+<p>统一记录：</p>
+<ul>
+<li>动作；</li>
+<li>消息；</li>
+<li>状态变化；</li>
+<li>环境变化；</li>
+<li>Controller 干预；</li>
+<li>异常事件。</li>
+</ul>
+<p>这对调试和事后分析很重要。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>不过，论文所说的“保证确定性”有些过强。统一时钟可以控制事件顺序，但只要 LLM 采样、异步请求和模型服务存在随机性，就不自动等于整个模拟完全可复现。</p>
+<hr>
+<h1>5. 插件机制：为什么可以热插拔？</h1>
+<p>所有插件都必须实现统一接口，例如：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">init()
+execute()
+</code></pre>
+<p>同一种插件具有相同接口，因此可以在运行时替换：</p>
+<p>[<br>
+\text{Rule-based Plan Plugin}<br>
+\rightarrow<br>
+\text{LLM Plan Plugin}<br>
+]</p>
+<p>或者：</p>
+<p>[<br>
+\text{Simple Memory Plugin}<br>
+\rightarrow<br>
+\text{Vector Database Memory Plugin}<br>
+]</p>
+<p>Agent 的其他组件不用修改。</p>
+<p>框架使用：</p>
+<ul>
+<li>抽象基类约束接口；</li>
+<li>Pydantic 约束数据结构；</li>
+<li>依赖注入传入数据库适配器；</li>
+<li>Adapter 屏蔽 Redis、PostgreSQL 等数据库差异。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</li>
+</ul>
+<h3>Database-per-Plugin</h3>
+<p>每个插件可以拥有自己的数据库：</p>
+<ul>
+<li>Relation Plugin 使用图数据库；</li>
+<li>Reflect Plugin 使用向量数据库；</li>
+<li>消息插件使用 Redis；</li>
+<li>结构化状态使用 PostgreSQL。</li>
+</ul>
+<p>好处是插件相对独立。</p>
+<p>坏处也很明显：跨插件事务和数据一致性会更加困难。比如一次动作同时修改：</p>
+<ul>
+<li>Agent 状态；</li>
+<li>空间位置；</li>
+<li>社会关系；</li>
+<li>消息记录。</li>
+</ul>
+<p>如果其中一个数据库失败，系统需要处理部分提交问题。论文没有深入解决这个问题。</p>
+<hr>
+<h1>6. 分布式架构</h1>
+<p>为了支持大量 Agent，作者使用 Ray，将系统划分为多个 <strong>MasPod</strong>。</p>
+<p>一个 MasPod 中包含：</p>
+<ul>
+<li>一组 Agent；</li>
+<li>局部 Environment；</li>
+<li>局部 Action；</li>
+<li>局部 Controller。</li>
+</ul>
+<p>上层还有一个 PodManager，负责：</p>
+<ul>
+<li>创建和删除 Pod；</li>
+<li>添加 Agent；</li>
+<li>负载均衡；</li>
+<li>跨 Pod 通信；</li>
+<li>生命周期管理。</li>
+</ul>
+<p>新增 Agent 时，PodManager会把它放到当前 Agent 数量最少的 Pod 中。PodManager和 MasPod 都实现为 Ray Actor。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>这与 Kubernetes 的 Pod 思想比较相似：</p>
+<p>[<br>
+\text{Agent} \approx \text{Process}<br>
+]</p>
+<p>[<br>
+\text{MasPod} \approx \text{Container/Pod}<br>
+]</p>
+<p>[<br>
+\text{PodManager} \approx \text{Orchestrator}<br>
+]</p>
+<p>不过它现在的负载均衡主要根据 Agent 数量，而不同 Agent 的推理开销可能相差很大。</p>
+<p>一个每 Tick 调用大模型、检索大量记忆的 Agent，显然不等价于一个规则型 Agent。因此“Agent 数量均衡”并不必然代表“计算负载均衡”。</p>
+<hr>
+<h1>7. 实验一：Universe 25 老鼠乌托邦</h1>
+<p>作者模拟了著名的 Universe 25 实验，用于证明系统能够处理：</p>
+<ul>
+<li>出生；</li>
+<li>死亡；</li>
+<li>多代繁衍；</li>
+<li>人口增长和下降；</li>
+<li>社会行为变化。</li>
+</ul>
+<p>初始只有 8 只老鼠，模拟运行 1,729 个 Tick，相当于 73 个模拟日，累计创建了 447 个个体，记录了 126,265 个行为事件。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>每只老鼠有：</p>
+<ul>
+<li>饥饿、口渴、健康和能量；</li>
+<li>攻击欲、亲社会性、压力；</li>
+<li>生育周期；</li>
+<li>年龄阶段；</li>
+<li>社会角色；</li>
+<li>关系网络。</li>
+</ul>
+<p>作者观察到：</p>
+<ol>
+<li>前期人口快速增长；</li>
+<li>中期社交和生育行为下降；</li>
+<li>攻击及病态行为增加；</li>
+<li>后期生育停止；</li>
+<li>最终只剩基本生存行为；</li>
+<li>种群走向灭亡。</li>
+</ol>
+<p>这些趋势与原始 Universe 25 实验的几个阶段相似。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<h3>我的评价</h3>
+<p>这个实验对“动态创建和删除 Agent”是有效的工程演示。</p>
+<p>但它不能充分证明系统真的发现了社会规律，因为很多机制已经被人工编码进去了：</p>
+<ul>
+<li>密度如何增加压力；</li>
+<li>压力如何增加攻击性；</li>
+<li>压力如何降低生育；</li>
+<li>年龄如何决定死亡；</li>
+<li>哪些行为被归类为病态。</li>
+</ul>
+<p>如果将这些因果关系提前写入状态转移规则，那么最后出现人口崩溃并不令人意外。</p>
+<p>因此它更像：</p>
+<blockquote>
+<p>框架能够运行一个复杂的 Universe 25 模型。</p>
+</blockquote>
+<p>而不是：</p>
+<blockquote>
+<p>LLM Agent 自发重新发现了 Universe 25 现象。</p>
+</blockquote>
+<hr>
+<h1>8. 实验二：一万个浙大校园 Agent</h1>
+<p>第二个实验模拟了 10,000 个 Agent：</p>
+<ul>
+<li>8,000 名学生；</li>
+<li>1,000 名教师；</li>
+<li>500 名行政人员；</li>
+<li>500 名工作人员。</li>
+</ul>
+<p>校园包含 41 个地点、12 种社会关系；每个 Agent 平均有 27 条关系。模拟运行 336 个 Tick，相当于 7 天。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<h2>性能结果</h2>
+<ul>
+<li>50 个 MasPod；</li>
+<li>每个 Pod 管理 200 个 Agent；</li>
+<li>完整模拟耗时 29.9 小时；</li>
+<li>平均每 Tick 约 320 秒；</li>
+<li>Agent 执行占总运行时间的 93%；</li>
+<li>总共消耗 12.6 亿 Token；</li>
+<li>Prompt Token 占 87.4%；</li>
+<li>记录了 133 万次动作和 47.4 万次地点访问。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</li>
+</ul>
+<p>使用的推理资源包括：</p>
+<ul>
+<li>8 张 A100 80GB；</li>
+<li>4 张 L40 48GB；</li>
+<li>4 张 RTX 4090 24GB；</li>
+<li>Qwen3-Next-80B-A3B-Instruct；</li>
+<li>Qwen3-30B-A3B-Instruct。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</li>
+</ul>
+<h3>这说明什么？</h3>
+<p>它说明框架确实能够：</p>
+<ul>
+<li>调度一万个 Agent；</li>
+<li>分配 Agent 到不同 Pod；</li>
+<li>处理大规模 LLM 请求；</li>
+<li>管理统一环境和关系网络；</li>
+<li>记录大量动作。</li>
+</ul>
+<p>但成本非常高，而且 10,000 个 Agent 运行 7 个模拟日需要接近 30 小时。</p>
+<p>更关键的是：</p>
+<blockquote>
+<p>“能够运行 10,000 个 Agent”证明的是系统扩展性，不等于这 10,000 个 Agent 的行为具有社会科学可信度。</p>
+</blockquote>
+<p>论文对行为真实性的验证主要是：</p>
+<ul>
+<li>活动分布看起来像校园；</li>
+<li>居住区和教学区访问较多；</li>
+<li>一个 Agent 能在后续对话中回忆之前发现的安全问题。</li>
+</ul>
+<p>这些证据还比较弱，特别是最后的记忆案例只是一个对话案例，没有大规模定量评估。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h1>9. 论文最主要的贡献</h1>
+<p>我认为真正有价值的贡献有三个。</p>
+<h2>贡献一：从 Agent-centric 转向 Society-centric</h2>
+<p>把：</p>
+<ul>
+<li>环境；</li>
+<li>关系；</li>
+<li>动作；</li>
+<li>时间；</li>
+<li>通信；</li>
+</ul>
+<p>从 Agent 内部抽离出来，变成社会级公共服务。</p>
+<p>这是支持动态社会的关键。</p>
+<h2>贡献二：将 LLM 行为纳入受控执行系统</h2>
+<p>不是让 LLM 直接改变世界，而是：</p>
+<p>[<br>
+\text{LLM Plan}<br>
+\rightarrow<br>
+\text{Structured Action}<br>
+\rightarrow<br>
+\text{Controller Check}<br>
+\rightarrow<br>
+\text{Execution}<br>
+]</p>
+<p>这个设计对减少非法动作和系统崩溃很有价值。</p>
+<h2>贡献三：把社会模拟变成可组装的软件系统</h2>
+<p>通过标准插件、数据库适配器、Ray Pod和统一控制面，可以更容易地构建不同社会模拟。</p>
+<p>代码库当前也提供了单机版、Ray 分布式版和可视化 Society-Panel。(<a href="https://github.com/ZJU-LLMs/Agent-Kernel">GitHub</a>)</p>
+<hr>
+<h1>Step 2：顶会审稿意见</h1>
+<h2>总体评价</h2>
+<p>这是一篇<strong>工程思想清晰、系统实现量较大，但实验论证明显不足</strong>的论文。</p>
+<p>它最强的地方是系统架构，不是 Agent 智能，也不是社会科学发现。</p>
+<hr>
+<h2>意见一：缺少真正的基线实验，核心优势大部分是作者自评</h2>
+<p>论文用星级表比较 Agent-Kernel、AgentSociety、AgentScope、CAMEL 等框架，并让自己的方法在适应性、可配置性、可靠性和复用性上全部获得三星。</p>
+<p>但作者也明确说明，这些评分主要来自自己的使用经验和对框架设计的理解，并不是统一实验得到的。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>这在顶会论文中远远不够。</p>
+<p>至少需要在相同场景下比较：</p>
+<ul>
+<li>增加和删除 Agent 的时间；</li>
+<li>修改环境需要改多少代码；</li>
+<li>实现相同模拟的代码量；</li>
+<li>吞吐量和延迟；</li>
+<li>内存占用；</li>
+<li>异常恢复时间；</li>
+<li>插件替换开销；</li>
+<li>最大 Agent 数量；</li>
+<li>多次运行结果的一致性。</li>
+</ul>
+<p>还应有消融实验：</p>
+<ul>
+<li>去掉 Controller 会怎样；</li>
+<li>去掉全局 Timer 会怎样；</li>
+<li>共享数据库与 database-per-plugin 有何区别；</li>
+<li>单体架构和微内核架构的实际开发成本有何差异；</li>
+<li>PodManager 使用 Agent 数量和真实负载调度有何差异。</li>
+</ul>
+<p>目前的证据只能说明“系统可以运行”，不能充分证明“微内核架构优于现有架构”。</p>
+<hr>
+<h2>意见二：社会模拟的有效性存在明显循环论证</h2>
+<p>Universe 25实验看起来复现了人口增长、停滞和崩溃，但这些现象可能早已被写进：</p>
+<ul>
+<li>生理状态转移；</li>
+<li>压力变量；</li>
+<li>攻击规则；</li>
+<li>生育规则；</li>
+<li>生命周期；</li>
+<li>关系更新；</li>
+<li>行为选择提示词。</li>
+</ul>
+<p>因此需要回答：</p>
+<blockquote>
+<p>最终现象究竟是 Agent 自发涌现的，还是设计者通过规则和 Prompt 预先植入的？</p>
+</blockquote>
+<p>论文缺少：</p>
+<ul>
+<li>参数敏感性实验；</li>
+<li>多随机种子实验；</li>
+<li>规则消融；</li>
+<li>Prompt 消融；</li>
+<li>不同 LLM 对比；</li>
+<li>与原始实验数据的定量拟合；</li>
+<li>社会科学专家盲评；</li>
+<li>预先注册的验证指标；</li>
+<li>样本外预测。</li>
+</ul>
+<p>校园实验的问题更严重：活动分布“看起来合理”和一段连贯对话，无法证明一万个 Agent 形成了真实可信的社会。</p>
+<p>这篇论文实际上验证了<strong>基础设施容量</strong>，却把一部分结果表述成了<strong>社会现象有效性</strong>。</p>
+<hr>
+<h2>意见三：“可靠、确定、可无限扩展”的表述过强</h2>
+<p>Controller能够验证“目标位置是否存在”，但无法可靠判断：</p>
+<ul>
+<li>Agent 的动机是否合理；</li>
+<li>对话内容是否事实正确；</li>
+<li>记忆总结是否扭曲；</li>
+<li>LLM 是否产生语义幻觉；</li>
+<li>社会决策是否符合现实人类。</li>
+</ul>
+<p>类似地，全局 Timer 可以减少因果倒置，但不能自动使整个系统确定性运行。LLM 采样、异步推理、跨 Pod 消息和服务端批处理仍可能带来运行差异。论文缺少确定性重放实验和故障注入测试。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>分布式设计中还有两个潜在问题：</p>
+<ol>
+<li>PodManager承担跨 Pod 通信和集中协调，可能形成瓶颈或单点故障；</li>
+<li>database-per-plugin涉及跨库更新，但论文没有讨论事务一致性、补偿机制和崩溃恢复。</li>
+</ol>
+<p>作者声称 Controller可以水平扩展、Agent 数量可以近乎无限扩展，但没有展示：</p>
+<ul>
+<li>强扩展和弱扩展曲线；</li>
+<li>多节点规模实验；</li>
+<li>节点失效恢复；</li>
+<li>网络分区；</li>
+<li>消息重复与丢失；</li>
+<li>万级以上 Agent；</li>
+<li>Controller与 PodManager的压力上限。</li>
+</ul>
+<p>这些表述需要明显收敛。</p>
+<hr>
+<h1>三个有研究价值的问题</h1>
+<h2>问题一：Agent 微内核中，究竟什么必须放进“内核”？</h2>
+<p>当前 Agent-Kernel的内核包括 Agent、Environment、Action、Controller和 System，范围其实已经不小。</p>
+<p>一个更根本的问题是：</p>
+<blockquote>
+<p>LLM Multi-Agent 系统的最小可信内核应该包含什么？</p>
+</blockquote>
+<p>可以研究：</p>
+<ul>
+<li>最小化 Trusted Computing Base；</li>
+<li>capability-based 权限模型；</li>
+<li>Agent身份和插件身份认证；</li>
+<li>插件隔离与沙箱；</li>
+<li>资源配额；</li>
+<li>内核态动作与用户态动作；</li>
+<li>插件崩溃后的故障隔离；</li>
+<li>动态插件升级的兼容性。</li>
+</ul>
+<p>这会比简单类比微内核更接近真正的 Agent Operating System 研究。</p>
+<hr>
+<h2>问题二：如何实现可重放、因果一致的 LLM 社会模拟？</h2>
+<p>真正科学的社会模拟应能回答：</p>
+<blockquote>
+<p>给定相同初始条件，为什么两次实验不同？差异来自社会随机性，还是系统并发和模型服务？</p>
+</blockquote>
+<p>可以研究：</p>
+<ul>
+<li>逻辑时钟与因果消息；</li>
+<li>event sourcing；</li>
+<li>确定性调度；</li>
+<li>LLM 输出缓存与版本锁定；</li>
+<li>随机种子传播；</li>
+<li>状态快照和检查点；</li>
+<li>跨数据库事务；</li>
+<li>分布式回滚；</li>
+<li>因果轨迹审计；</li>
+<li>Counterfactual replay。</li>
+</ul>
+<p>最终目标不是让所有运行完全一样，而是能够精确解释：</p>
+<h1>[ \text{Outcome Difference}</h1>
+<p>\text{Model Randomness}<br>
++<br>
+\text{Environment Randomness}<br>
++<br>
+\text{Scheduling Randomness}<br>
+]</p>
+<hr>
+<h2>问题三：如何区分“真正涌现”与“规则预编码”？</h2>
+<p>这是 LLM 社会模拟最重要、也最困难的问题。</p>
+<p>需要建立一套科学验证方法：</p>
+<ol>
+<li>将部分真实数据作为校准集；</li>
+<li>隐藏另一部分现象作为测试集；</li>
+<li>只根据校准数据设计 Agent；</li>
+<li>检查模型能否预测未见过的社会现象；</li>
+<li>对 Prompt、规则、模型和随机性进行系统消融；</li>
+<li>对输出进行不确定性估计。</li>
+</ol>
+<p>还可以使用：</p>
+<ul>
+<li>Approximate Bayesian Computation；</li>
+<li>Simulation-based inference；</li>
+<li>因果发现；</li>
+<li>参数可识别性分析；</li>
+<li>多模型集成；</li>
+<li>人类行为数据校准。</li>
+</ul>
+<p>只有当系统能预测未被直接编码的结果时，才更有资格称为“涌现”。</p>
+<hr>
+<h1>最终判断</h1>
+<h2>评分</h2>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>维度</th>
+<th>评价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>问题重要性</td>
+<td>8/10</td>
+</tr>
+<tr>
+<td>架构清晰度</td>
+<td>8/10</td>
+</tr>
+<tr>
+<td>工程实现</td>
+<td>8/10</td>
+</tr>
+<tr>
+<td>方法新颖性</td>
+<td>6.5/10</td>
+</tr>
+<tr>
+<td>实验严谨性</td>
+<td>4/10</td>
+</tr>
+<tr>
+<td>社会科学有效性</td>
+<td>3.5/10</td>
+</tr>
+<tr>
+<td>可复现性</td>
+<td>6/10，代码开放但算力门槛很高</td>
+</tr>
+<tr>
+<td>论文表述</td>
+<td>6/10，存在较多过强结论</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<h2>审稿结论：<strong>Weak Reject</strong></h2>
+<p>作为顶会主会论文，我会给 <strong>Weak Reject</strong>。</p>
+<p>原因不是系统没有价值，而是论文的核心主张包括：</p>
+<ul>
+<li>比现有框架更好；</li>
+<li>更可靠；</li>
+<li>更确定；</li>
+<li>更可复用；</li>
+<li>能产生可信社会模拟。</li>
+</ul>
+<p>但目前实验主要证明了：</p>
+<ul>
+<li>可以动态增删 Agent；</li>
+<li>可以运行 Universe 25场景；</li>
+<li>可以用大量算力运行一万个 Agent；</li>
+<li>可以记录和调度大量行为。</li>
+</ul>
+<p>这些不足以支撑全部主张。</p>
+<p>如果投稿到系统演示、开源软件或应用展示赛道，我会倾向于接收；如果作者补充严格基线、故障实验、扩展性曲线、消融实验和社会有效性验证，它有机会成为一篇较强的 Agent 基础设施论文。</p>
+<p><strong>我的总体看法是：思想值得关注，工程量很扎实，但目前更像一个优秀平台的技术报告，而不是已经被充分验证的顶会研究成果。</strong></p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://younglingi2003.github.io">Younglingi 的个人博客</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+
+
+
+</script>
+
+
+</html>
