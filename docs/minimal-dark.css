@@ -604,3 +604,37 @@ body:has(#avatarImg) #content > div:first-child {
     width: 112px !important;
   }
 }
+
+/* Desktop article layout: TOC on the left, content on the right */
+@media (min-width: 1250px) {
+  body:has(#content > .collapsible-toc) {
+    max-width: 1240px !important;
+  }
+
+  #content:has(> .collapsible-toc) {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    column-gap: 32px;
+    align-items: start;
+  }
+
+  #content > .collapsible-toc {
+    position: sticky !important;
+    grid-column: 1;
+    grid-row: 1;
+    top: 24px !important;
+    right: auto !important;
+    left: auto !important;
+    width: 264px !important;
+    max-height: calc(100vh - 48px) !important;
+    margin: 0 !important;
+    overflow-y: auto;
+    align-self: start;
+  }
+
+  #content > #postBody {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+}
