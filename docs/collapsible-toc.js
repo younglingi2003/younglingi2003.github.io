@@ -132,9 +132,90 @@
     document.head.appendChild(style);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCollapsibleTOC);
-  } else {
+  function initCommentSection() {
+    var button = document.getElementById("cmButton");
+    var comments = document.getElementById("comments");
+    if (!button || !comments || document.getElementById("comment-shell")) return;
+
+    var counter = button.querySelector(".Counter");
+    button.textContent = "打开评论区";
+    if (counter) button.appendChild(counter);
+    button.setAttribute("aria-label", "打开评论区");
+
+    var shell = document.createElement("section");
+    shell.id = "comment-shell";
+    shell.className = "comment-shell";
+    shell.setAttribute("aria-labelledby", "comment-shell-title");
+
+    var header = document.createElement("div");
+    header.className = "comment-shell-header";
+    header.innerHTML = [
+      '<div class="comment-shell-icon" aria-hidden="true">',
+      '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">',
+      '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.6-4.8A7.8 7.8 0 0 1 3 12a7 7 0 0 1 7-7h7a4 4 0 0 1 4 4z"></path>',
+      '<path d="M8 11h8M8 15h5"></path>',
+      '</svg></div>',
+      '<div class="comment-shell-copy">',
+      '<h2 id="comment-shell-title">讨论区</h2>',
+      '<p>欢迎分享想法、补充资料或提出问题。</p>',
+      '</div>',
+      '<span class="comment-shell-badge">GitHub Issues</span>'
+    ].join("");
+
+    var note = document.createElement("p");
+    note.className = "comment-shell-note";
+    note.textContent = "评论公开可见，首次使用需要登录 GitHub。";
+
+    var parent = button.parentNode;
+    parent.insertBefore(shell, button);
+    shell.appendChild(header);
+    shell.appendChild(note);
+    shell.appendChild(button);
+    shell.appendChild(comments);
+
+    var observer = new MutationObserver(function () {
+      if (comments.querySelector("iframe.utterances")) {
+        shell.classList.add("is-open");
+        observer.disconnect();
+      }
+    });
+    observer.observe(comments, { childList: true, subtree: true });
+
+    var style = document.createElement("style");
+    style.id = "comment-shell-style";
+    style.textContent = [
+      ".comment-shell { margin: 56px 0 12px; padding: 24px; border: 1px solid var(--borderColor-default, #30363d); border-radius: 16px; background: linear-gradient(145deg, rgba(56,139,253,.09), rgba(13,17,23,.96) 52%); box-shadow: 0 18px 50px rgba(0,0,0,.18); overflow: hidden; }",
+      ".comment-shell-header { display: flex; align-items: center; gap: 14px; }",
+      ".comment-shell-icon { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid rgba(88,166,255,.35); border-radius: 12px; color: var(--fgColor-accent, #58a6ff); background: rgba(56,139,253,.11); }",
+      ".comment-shell-copy { min-width: 0; flex: 1; }",
+      ".comment-shell-copy h2 { margin: 0; padding: 0; border: 0; font-size: 20px; line-height: 1.3; color: var(--fgColor-default, #f0f6fc); }",
+      ".comment-shell-copy p { margin: 4px 0 0; color: var(--fgColor-muted, #8b949e); font-size: 14px; }",
+      ".comment-shell-badge { flex: 0 0 auto; padding: 4px 9px; border: 1px solid var(--borderColor-default, #30363d); border-radius: 999px; color: var(--fgColor-muted, #8b949e); background: rgba(110,118,129,.09); font-size: 12px; }",
+      ".comment-shell-note { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--borderColor-muted, #21262d); color: var(--fgColor-muted, #8b949e); font-size: 13px; }",
+      ".comment-shell #cmButton { min-height: 48px; height: auto; margin: 14px 0 0 !important; border: 1px solid rgba(88,166,255,.55); border-radius: 10px; color: #fff; background: linear-gradient(180deg, #2f81f7, #1f6feb); box-shadow: 0 8px 22px rgba(31,111,235,.22); font-weight: 650; letter-spacing: .02em; transition: transform .16s ease, border-color .16s ease, filter .16s ease; }",
+      ".comment-shell #cmButton::after { content: '  ↗'; opacity: .8; }",
+      ".comment-shell #cmButton:hover:not(:disabled) { transform: translateY(-1px); border-color: #79c0ff; filter: brightness(1.06); }",
+      ".comment-shell #cmButton:disabled { cursor: wait; opacity: .72; }",
+      ".comment-shell #cmButton .Counter { margin-left: 8px; background: rgba(255,255,255,.2); color: #fff; }",
+      ".comment-shell #comments { margin-top: 0 !important; }",
+      ".comment-shell #comments:empty { display: none; }",
+      ".comment-shell.is-open .comment-shell-header { padding-bottom: 18px; border-bottom: 1px solid var(--borderColor-muted, #21262d); }",
+      ".comment-shell.is-open .comment-shell-note { display: none; }",
+      ".comment-shell.is-open #comments { margin-top: 18px !important; }",
+      ".comment-shell .utterances { max-width: none !important; margin: 0 !important; }",
+      "@media (max-width: 600px) { .comment-shell { margin-top: 40px; padding: 18px; border-radius: 12px; } .comment-shell-badge { display: none; } .comment-shell-copy h2 { font-size: 18px; } }"
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function initPageEnhancements() {
     initCollapsibleTOC();
+    initCommentSection();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPageEnhancements);
+  } else {
+    initPageEnhancements();
   }
 })();
