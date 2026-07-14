@@ -7,17 +7,15 @@
     <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
     
     <link rel="icon" href="https://github.com/younglingi2003.png">
-<meta name="description" content="# 论文信息
+<meta name="description" content="# 论文解读：R1-Searcher++
 
-**Agent-Kernel: A MicroKernel Multi-Agent System Framework for Adaptive Social Simulation Powered by LLMs**
-
-论文于 **2025 年 12 月 1 日**提交到 arXiv，目前页面显示为 v1，代码已经开源。">
+**论文：** *R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning*
+**核心主题：** 让大模型学会在“自己想”和“上网搜”之间动态切换，并将搜索得到的知识进一步写入模型参数。">
 <meta property="og:title" content="Agent-Kernel">
-<meta property="og:description" content="# 论文信息
+<meta property="og:description" content="# 论文解读：R1-Searcher++
 
-**Agent-Kernel: A MicroKernel Multi-Agent System Framework for Adaptive Social Simulation Powered by LLMs**
-
-论文于 **2025 年 12 月 1 日**提交到 arXiv，目前页面显示为 v1，代码已经开源。">
+**论文：** *R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning*
+**核心主题：** 让大模型学会在“自己想”和“上网搜”之间动态切换，并将搜索得到的知识进一步写入模型参数。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://younglingi2003.github.io/post/Agent-Kernel.html">
 <meta property="og:image" content="https://github.com/younglingi2003.png">
@@ -78,739 +76,741 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 </div>
 </div>
     <div id="content">
-<div class="markdown-body" id="postBody"><h1>论文信息</h1>
-<p><strong>Agent-Kernel: A MicroKernel Multi-Agent System Framework for Adaptive Social Simulation Powered by LLMs</strong></p>
-<p>论文于 <strong>2025 年 12 月 1 日</strong>提交到 arXiv，目前页面显示为 v1，代码已经开源。它不是一篇提出新模型或新训练算法的论文，而是一篇偏向<strong>多智能体基础设施、分布式系统和软件架构</strong>的工作。(<a href="https://arxiv.org/abs/2512.01610" rel="nofollow">arXiv</a>)</p>
+<div class="markdown-body" id="postBody"><h1>论文解读：R1-Searcher++</h1>
+<p><strong>论文：</strong> <em>R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning</em><br>
+<strong>核心主题：</strong> 让大模型学会在“自己想”和“上网搜”之间动态切换，并将搜索得到的知识进一步写入模型参数。论文于2025年5月提交，主要基于 Qwen2.5-7B-Instruct 展开实验。(<a href="https://arxiv.org/abs/2505.17005" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
 <hr>
-<h1>Step 1：详细、通俗讲解</h1>
-<h2>1. 一句话概括</h2>
-<p>这篇论文想做的是：</p>
+<h1>Step 1：详细、通俗地讲解论文</h1>
+<h2>1. 论文想解决什么问题？</h2>
+<p>传统大模型回答问题时，主要有两种极端。</p>
+<h3>极端一：只依赖模型内部知识</h3>
+<p>例如问：</p>
 <blockquote>
-<p>不再把每个 Agent 写成一个“什么都自己管理”的大型对象，而是建立一个类似操作系统微内核的公共底座，把 Agent、环境、动作、通信、时钟、日志和权限控制拆开，通过插件动态组装社会模拟。</p>
+<p>花旗银行成立那一年，美国总统是谁？</p>
 </blockquote>
-<p>它真正解决的不是“Agent 如何推理得更聪明”，而是：</p>
+<p>模型需要先知道花旗银行成立于哪一年，再确定当年的美国总统。</p>
+<p>如果模型内部记错了花旗银行的成立年份，后面的推理即使完全正确，最终答案还是错的。这就是模型参数知识存在的典型问题：</p>
 <ul>
-<li>如何同时管理上千、上万个 Agent；</li>
-<li>如何在运行中出生、死亡、迁移或新增 Agent；</li>
-<li>如何动态改变环境和社会规则；</li>
-<li>如何阻止 Agent 执行非法动作；</li>
-<li>如何让不同社会模拟复用同一套基础代码。</li>
+<li>知识可能过时；</li>
+<li>知识可能缺失；</li>
+<li>模型可能“以为自己知道”，实际上记错了。</li>
 </ul>
-<p>论文将这些需求概括为四个词：<strong>适应性、可配置性、可靠性和可复用性</strong>。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<hr>
-<h2>2. 现有 Multi-Agent 框架有什么问题？</h2>
-<p>作者认为，AgentScope、AutoGen、CAMEL、AgentSociety 等框架，大体可以分成两类。</p>
-<h3>第一类：Pipeline 架构</h3>
-<p>例如：</p>
-<p>[<br>
-\text{Planner} \rightarrow \text{Agent A} \rightarrow \text{Agent B} \rightarrow \text{Tool}<br>
-]</p>
-<p>中央 Planner 事先定义好有哪些 Agent、消息怎么流动、每个 Agent 干什么。</p>
-<p>问题是：这个流程通常比较静态。</p>
-<p>假设模拟过程中突然出生了一个新 Agent，就可能需要修改：</p>
-<ul>
-<li>Planner 中的 Agent 列表；</li>
-<li>其他 Agent 的联系人列表；</li>
-<li>消息路由；</li>
-<li>权限配置；</li>
-<li>环境状态。</li>
-</ul>
-<p>因此它适合任务协作，却不太适合人口不断变化的动态社会。</p>
-<h3>第二类：Layered 架构</h3>
-<p>例如：</p>
-<ul>
-<li>Agent 层；</li>
-<li>社会关系层；</li>
-<li>消息层；</li>
-<li>数据库层。</li>
-</ul>
-<p>虽然代码按层拆开了，但很多环境和动作信息仍然绑定在 Agent 身上。比如每个 Agent 内部都保存自己的地图、关系表和可用动作。</p>
-<p>新增一个 Agent 时，其他 Agent 的内部状态可能仍然需要同步修改。</p>
-<p>作者认为，问题的根源是：</p>
+<h3>极端二：遇到每一步都搜索</h3>
+<p>RAG 或搜索智能体可以调用外部检索器，但经过 RL 训练后，模型可能发现：</p>
 <blockquote>
-<p>现有框架主要是 <strong>agent-centric，以 Agent 为中心</strong>；而社会模拟需要的是 <strong>society-centric，以整个社会为中心</strong>。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>搜索通常比依赖自己的记忆更保险。</p>
 </blockquote>
-<hr>
-<h1>3. 微内核思想到底是什么？</h1>
-<p>操作系统中的微内核思想是：内核只保留最基本、最稳定的机制，把文件系统、驱动等具体功能放到内核外的服务中。</p>
-<p>Agent-Kernel借用了这个思想：</p>
-<h2>内核负责稳定的“机制”</h2>
-<p>例如：</p>
+<p>于是它开始无论什么问题都搜索。</p>
+<p>例如模型已经知道“1812年的美国总统是 James Madison”，却还是要再搜一遍。这样虽然可能保证答案正确，却带来：</p>
 <ul>
-<li>插件注册；</li>
-<li>模块间通信；</li>
-<li>全局时间；</li>
-<li>消息传递；</li>
-<li>行为验证；</li>
-<li>日志记录；</li>
-<li>Agent 生命周期管理；</li>
-<li>分布式部署。</li>
+<li>更多搜索调用；</li>
+<li>更长推理时间；</li>
+<li>更高 API 成本；</li>
+<li>更多无关或冲突信息；</li>
+<li>对搜索引擎形成过度依赖。</li>
 </ul>
-<h2>插件负责变化的“策略和业务逻辑”</h2>
-<p>例如：</p>
-<ul>
-<li>Agent 如何感知；</li>
-<li>如何规划；</li>
-<li>如何反思；</li>
-<li>地图是什么样；</li>
-<li>社会关系如何变化；</li>
-<li>有哪些动作；</li>
-<li>吃饭、睡觉、上课、生育分别如何实现。</li>
-</ul>
-<p>因此，同一个内核可以运行：</p>
-<ul>
-<li>老鼠社会；</li>
-<li>大学校园；</li>
-<li>医院；</li>
-<li>城市交通；</li>
-<li>信息传播；</li>
-<li>灾害响应。</li>
-</ul>
-<p>只需要替换对应插件，而不是重写整个框架。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<h3>我的看法</h3>
-<p>这个思想本身不算全新的计算机系统思想，核心仍然是：</p>
-<ul>
-<li>微内核；</li>
-<li>插件系统；</li>
-<li>Mediator 模式；</li>
-<li>Facade 模式；</li>
-<li>依赖注入；</li>
-<li>database-per-service；</li>
-<li>Ray Actor。</li>
-</ul>
-<p>但是，把这些系统设计<strong>系统性地应用到 LLM 社会模拟</strong>，并且明确提出“社会中心而非 Agent 中心”，是这篇论文比较有价值的地方。</p>
-<p>它的创新更像是：</p>
+<p>R1-Searcher++试图找到中间状态：</p>
 <blockquote>
-<p>找到了一个适合 LLM 社会模拟的系统抽象，而不是发明了一种新的底层算法。</p>
+<p><strong>知道的部分直接使用内部知识，不确定的部分才搜索；搜索到的重要知识还要尽量记住。</strong></p>
 </blockquote>
+<p>论文把这个过程称为 <strong>Dynamic Knowledge Acquisition，动态知识获取</strong>。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
 <hr>
-<h1>4. 五个核心模块</h1>
-<p>Agent-Kernel的内核由五个模块组成：</p>
-<p>[<br>
-\text{Agent}+\text{Environment}+\text{Action}+\text{Controller}+\text{System}<br>
-]</p>
-<hr>
-<h2>4.1 Agent Module：只负责“认知主体”</h2>
-<p>Agent 模块不再保存完整世界，只维护与个体自身有关的内容：</p>
-<ul>
-<li>身份 Profile；</li>
-<li>动态状态 State；</li>
-<li>感知 Perceive；</li>
-<li>规划 Plan；</li>
-<li>执行转换 Invoke；</li>
-<li>反思 Reflect。</li>
-</ul>
-<p>典型认知循环是：</p>
-<p>[<br>
-\text{Perceive}<br>
-\rightarrow<br>
-\text{Plan}<br>
-\rightarrow<br>
-\text{Invoke}<br>
-\rightarrow<br>
-\text{State Update}<br>
-\rightarrow<br>
-\text{Reflect}<br>
-]</p>
-<p>例如学生 Alice：</p>
-<ol>
-<li>感知到“上午十点有课”；</li>
-<li>LLM 生成计划“去教室”；</li>
-<li>Invoke 将自然语言计划解析为 <code class="notranslate">move(classroom)</code>；</li>
-<li>Action 模块执行移动；</li>
-<li>State 更新 Alice 的位置、体力和情绪；</li>
-<li>Reflect 把这段经历压缩成记忆。</li>
-</ol>
-<p>论文中真正主要使用 LLM 的地方是 Plan Plugin，以及部分反思和记忆生成；移动、状态更新、权限验证等仍由确定性的程序完成。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<p>这是一项很重要的设计：</p>
-<blockquote>
-<p>LLM 负责“想做什么”，程序负责“能不能做、怎么做、做完发生什么”。</p>
-</blockquote>
-<p>否则，假如让 LLM 同时决定动作和物理后果，很容易出现：</p>
-<ul>
-<li>瞬移；</li>
-<li>使用不存在的工具；</li>
-<li>进入不存在的建筑；</li>
-<li>重复扣除资源；</li>
-<li>死亡 Agent 继续行动。</li>
-</ul>
-<hr>
-<h2>4.2 Environment Module：唯一的客观世界</h2>
-<p>Environment 是整个社会共享的“世界状态”，主要包含：</p>
-<h3>Space Plugin</h3>
-<p>负责：</p>
-<ul>
-<li>地图；</li>
-<li>建筑；</li>
-<li>Agent 位置；</li>
-<li>邻居查询；</li>
-<li>空间移动；</li>
-<li>静态和动态实体。</li>
-</ul>
-<h3>Relation Plugin</h3>
-<p>负责：</p>
-<ul>
-<li>好友关系；</li>
-<li>师生关系；</li>
-<li>同事关系；</li>
-<li>亲属关系；</li>
-<li>关系强度；</li>
-<li>社会网络动态更新。</li>
-</ul>
-<p>过去可能每个 Agent 都保存一份地图和联系人列表。Agent-Kernel只保留一份权威环境。</p>
-<p>例如新增一座图书馆，只需要修改 Space Plugin；所有 Agent 下一次感知时就能看到它。</p>
-<p>新增一个 Agent 也只需要在环境和关系插件中注册，不必修改其他所有 Agent。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<h3>我的看法</h3>
-<p>这一点其实是整篇论文最核心的设计。</p>
-<p>它把：</p>
-<p>[<br>
-\text{Agent拥有世界}<br>
-]</p>
-<p>改成：</p>
-<p>[<br>
-\text{Agent查询共享世界}<br>
-]</p>
-<p>这类似数据库系统中的“单一事实来源”。它确实有利于动态人口、关系更新和一致性管理。</p>
-<hr>
-<h2>4.3 Action Module：社会共享的能力集合</h2>
-<p>动作也不再硬编码在 Agent 内部，而是放在统一的 Action Module 中。</p>
-<p>主要包括三类插件：</p>
-<h3>Communication Plugin</h3>
-<p>负责：</p>
-<ul>
-<li>消息封装；</li>
-<li>消息发送；</li>
-<li>消息存储；</li>
-<li>消息查询；</li>
-<li>Agent 之间交流。</li>
-</ul>
-<h3>Tools Plugin</h3>
-<p>负责调用工具，包括：</p>
-<ul>
-<li>本地 Python 函数；</li>
-<li>远程服务；</li>
-<li>MCP 工具。</li>
-</ul>
-<h3>Other-Actions Plugin</h3>
-<p>负责社会模拟中的普通行为，例如：</p>
-<ul>
-<li>移动；</li>
-<li>吃饭；</li>
-<li>睡觉；</li>
-<li>上课；</li>
-<li>工作；</li>
-<li>生育；</li>
-<li>攻击。</li>
-</ul>
-<p>动作方法还可以通过注解区分：</p>
-<ul>
-<li>Agent 可以直接调用的动作；</li>
-<li>只有系统可以调用的管理接口。</li>
-</ul>
-<p>这相当于初步的权限控制。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<hr>
-<h2>4.4 Controller Module：系统调用入口和“裁判”</h2>
-<p>Controller 是整个系统的中介者。</p>
-<p>Agent 不能直接修改 Environment，而必须经过 Controller：</p>
-<p>[<br>
-\text{Agent Request}<br>
-\rightarrow<br>
-\text{Controller Validation}<br>
-\rightarrow<br>
-\text{Action/Environment}<br>
-]</p>
-<p>例如 Agent 想进入一栋建筑：</p>
-<ol>
-<li>Plan 输出“进入实验室”；</li>
-<li>Invoke 生成对应动作请求；</li>
-<li>Controller 检查实验室是否存在；</li>
-<li>检查 Agent 是否有权限进入；</li>
-<li>检查路径或开放时间；</li>
-<li>验证通过后才执行。</li>
-</ol>
-<p>Controller还有第二项功能：<strong>运行时干预</strong>。</p>
-<p>研究者可以在模拟中途：</p>
-<ul>
-<li>修改某个 Agent 的状态；</li>
-<li>增加社会关系；</li>
-<li>关闭建筑；</li>
-<li>广播突发事件；</li>
-<li>改变规则；</li>
-<li>向某些 Agent 发出警告。</li>
-</ul>
-<p>所以它既像操作系统的系统调用入口，也像实验控制台。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<h3>需要注意</h3>
-<p>论文将这称为“可靠性”，但它主要保证的是：</p>
-<ul>
-<li>动作是否合法；</li>
-<li>状态是否符合预定义规则；</li>
-<li>系统是否不容易崩溃。</li>
-</ul>
-<p>它并不能保证：</p>
-<ul>
-<li>Agent 的判断是真实的；</li>
-<li>社会行为符合真人；</li>
-<li>LLM 没有语义幻觉；</li>
-<li>最终社会结论科学可信。</li>
-</ul>
-<p>因此，<strong>执行可靠性不等于模拟有效性</strong>。</p>
-<hr>
-<h2>4.5 System Module：时间、通信与记录</h2>
-<p>System Module包含三项全局服务。</p>
-<h3>Timer</h3>
-<p>所有 Agent 使用统一的 Tick。</p>
-<p>否则可能出现：</p>
-<ul>
-<li>Agent A 已经来到第二天；</li>
-<li>Agent B 还停留在第一天；</li>
-<li>B 收到来自“未来”的消息。</li>
-</ul>
-<p>全局时钟可以控制模拟中的因果顺序。</p>
-<h3>Messager</h3>
-<p>Agent 不直接同步等待对方回复，而是将消息发送到异步消息系统。</p>
-<p>这样可以避免：</p>
-<ul>
-<li>A 等 B；</li>
-<li>B 等 C；</li>
-<li>C 又等 A；</li>
-</ul>
-<p>最终形成通信死锁。</p>
-<h3>Recorder</h3>
-<p>统一记录：</p>
-<ul>
-<li>动作；</li>
-<li>消息；</li>
-<li>状态变化；</li>
-<li>环境变化；</li>
-<li>Controller 干预；</li>
-<li>异常事件。</li>
-</ul>
-<p>这对调试和事后分析很重要。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<p>不过，论文所说的“保证确定性”有些过强。统一时钟可以控制事件顺序，但只要 LLM 采样、异步请求和模型服务存在随机性，就不自动等于整个模拟完全可复现。</p>
-<hr>
-<h1>5. 插件机制：为什么可以热插拔？</h1>
-<p>所有插件都必须实现统一接口，例如：</p>
-<pre lang="text" class="notranslate"><code class="notranslate">init()
-execute()
+<h2>2. 核心思想</h2>
+<p>R1-Searcher++让模型在每个推理步骤中选择两种动作之一：</p>
+<h3>动作一：内部推理</h3>
+<p>当模型认为自己已经知道答案时，生成：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">&lt;internal&gt;
+模型使用内部知识完成该步骤
+&lt;/internal&gt;
 </code></pre>
-<p>同一种插件具有相同接口，因此可以在运行时替换：</p>
-<p>[<br>
-\text{Rule-based Plan Plugin}<br>
-\rightarrow<br>
-\text{LLM Plan Plugin}<br>
-]</p>
-<p>或者：</p>
-<p>[<br>
-\text{Simple Memory Plugin}<br>
-\rightarrow<br>
-\text{Vector Database Memory Plugin}<br>
-]</p>
-<p>Agent 的其他组件不用修改。</p>
-<p>框架使用：</p>
-<ul>
-<li>抽象基类约束接口；</li>
-<li>Pydantic 约束数据结构；</li>
-<li>依赖注入传入数据库适配器；</li>
-<li>Adapter 屏蔽 Redis、PostgreSQL 等数据库差异。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</li>
-</ul>
-<h3>Database-per-Plugin</h3>
-<p>每个插件可以拥有自己的数据库：</p>
-<ul>
-<li>Relation Plugin 使用图数据库；</li>
-<li>Reflect Plugin 使用向量数据库；</li>
-<li>消息插件使用 Redis；</li>
-<li>结构化状态使用 PostgreSQL。</li>
-</ul>
-<p>好处是插件相对独立。</p>
-<p>坏处也很明显：跨插件事务和数据一致性会更加困难。比如一次动作同时修改：</p>
-<ul>
-<li>Agent 状态；</li>
-<li>空间位置；</li>
-<li>社会关系；</li>
-<li>消息记录。</li>
-</ul>
-<p>如果其中一个数据库失败，系统需要处理部分提交问题。论文没有深入解决这个问题。</p>
-<hr>
-<h1>6. 分布式架构</h1>
-<p>为了支持大量 Agent，作者使用 Ray，将系统划分为多个 <strong>MasPod</strong>。</p>
-<p>一个 MasPod 中包含：</p>
-<ul>
-<li>一组 Agent；</li>
-<li>局部 Environment；</li>
-<li>局部 Action；</li>
-<li>局部 Controller。</li>
-</ul>
-<p>上层还有一个 PodManager，负责：</p>
-<ul>
-<li>创建和删除 Pod；</li>
-<li>添加 Agent；</li>
-<li>负载均衡；</li>
-<li>跨 Pod 通信；</li>
-<li>生命周期管理。</li>
-</ul>
-<p>新增 Agent 时，PodManager会把它放到当前 Agent 数量最少的 Pod 中。PodManager和 MasPod 都实现为 Ray Actor。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<p>这与 Kubernetes 的 Pod 思想比较相似：</p>
-<p>[<br>
-\text{Agent} \approx \text{Process}<br>
-]</p>
-<p>[<br>
-\text{MasPod} \approx \text{Container/Pod}<br>
-]</p>
-<p>[<br>
-\text{PodManager} \approx \text{Orchestrator}<br>
-]</p>
-<p>不过它现在的负载均衡主要根据 Agent 数量，而不同 Agent 的推理开销可能相差很大。</p>
-<p>一个每 Tick 调用大模型、检索大量记忆的 Agent，显然不等价于一个规则型 Agent。因此“Agent 数量均衡”并不必然代表“计算负载均衡”。</p>
-<hr>
-<h1>7. 实验一：Universe 25 老鼠乌托邦</h1>
-<p>作者模拟了著名的 Universe 25 实验，用于证明系统能够处理：</p>
-<ul>
-<li>出生；</li>
-<li>死亡；</li>
-<li>多代繁衍；</li>
-<li>人口增长和下降；</li>
-<li>社会行为变化。</li>
-</ul>
-<p>初始只有 8 只老鼠，模拟运行 1,729 个 Tick，相当于 73 个模拟日，累计创建了 447 个个体，记录了 126,265 个行为事件。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<p>每只老鼠有：</p>
-<ul>
-<li>饥饿、口渴、健康和能量；</li>
-<li>攻击欲、亲社会性、压力；</li>
-<li>生育周期；</li>
-<li>年龄阶段；</li>
-<li>社会角色；</li>
-<li>关系网络。</li>
-</ul>
-<p>作者观察到：</p>
+<h3>动作二：外部搜索</h3>
+<p>当模型认为信息不足、可能过时或者需要核实时，生成：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">&lt;external&gt;
+搜索查询
+&lt;/external&gt;
+</code></pre>
+<p>系统执行搜索后，将结果以文档形式返回：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">&lt;document&gt;
+搜索到的内容
+&lt;/document&gt;
+</code></pre>
+<p>模型继续推理，直到得到最终答案。</p>
+<p>因此，这篇论文真正训练的并不只是“怎么搜索”，还包括三个决策：</p>
 <ol>
-<li>前期人口快速增长；</li>
-<li>中期社交和生育行为下降；</li>
-<li>攻击及病态行为增加；</li>
-<li>后期生育停止；</li>
-<li>最终只剩基本生存行为；</li>
-<li>种群走向灭亡。</li>
+<li><strong>什么时候搜索；</strong></li>
+<li><strong>搜索什么；</strong></li>
+<li><strong>什么时候停止搜索并使用内部知识。</strong></li>
 </ol>
-<p>这些趋势与原始 Universe 25 实验的几个阶段相似。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<h3>我的评价</h3>
-<p>这个实验对“动态创建和删除 Agent”是有效的工程演示。</p>
-<p>但它不能充分证明系统真的发现了社会规律，因为很多机制已经被人工编码进去了：</p>
+<p>论文采用两个训练阶段：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">SFT冷启动
+    ↓
+让模型先学会内部/外部两种动作的基本格式
+    ↓
+强化学习
+    ↓
+在正确率、搜索次数和知识记忆之间寻找平衡
+</code></pre>
+<p>(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</p>
+<hr>
+<h2>3. 第一阶段：SFT Cold-Start</h2>
+<h3>3.1 为什么需要冷启动？</h3>
+<p>如果直接对原始模型做 RL，模型一开始甚至不知道：</p>
 <ul>
-<li>密度如何增加压力；</li>
-<li>压力如何增加攻击性；</li>
-<li>压力如何降低生育；</li>
-<li>年龄如何决定死亡；</li>
-<li>哪些行为被归类为病态。</li>
+<li>如何生成搜索查询；</li>
+<li>如何调用检索器；</li>
+<li>如何区分内部知识和搜索结果；</li>
+<li>如何输出规定格式。</li>
 </ul>
-<p>如果将这些因果关系提前写入状态转移规则，那么最后出现人口崩溃并不令人意外。</p>
-<p>因此它更像：</p>
+<p>搜索动作空间又比普通问答复杂，因此纯 RL 的初期探索很容易产生大量无效轨迹。</p>
+<p>作者先让基础模型自己生成回答，然后通过拒绝采样，只保留：</p>
+<ul>
+<li>最终答案正确；</li>
+<li><code class="notranslate">&lt;internal&gt;</code> 标签正确；</li>
+<li><code class="notranslate">&lt;external&gt;</code> 标签正确；</li>
+<li>搜索调用格式正确；</li>
+</ul>
+<p>的轨迹，作为 SFT 数据。</p>
+<p>这一步的作用类似于先教模型“工具说明书”，而不是直接把它训练成搜索专家。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h3>3.2 为什么要屏蔽检索文档的损失？</h3>
+<p>一条训练轨迹可能是：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">模型：我要搜索 Titanic release year
+搜索器：Titanic is a 1997 American film
+模型：因此 Titanic 比 Avatar 更早上映
+</code></pre>
+<p>其中第二行并不是模型生成的，而是环境返回的观察结果。</p>
+<p>因此，训练时不能要求模型去预测搜索引擎返回的每个 token。否则模型会开始学习“伪造搜索结果”，而不是学习什么时候调用搜索器。</p>
+<p>作者将检索文档对应 token 的 mask 设置为0，只对模型自己产生的内容计算损失。这个设计同时用于 SFT 和 RL。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h2>4. 第二阶段：RL for Dynamic Knowledge Acquisition</h2>
+<p>SFT 只能让模型模仿已有轨迹，并不一定能真正学会：</p>
+<ul>
+<li>哪些问题应该搜索；</li>
+<li>哪些问题不应该搜索；</li>
+<li>搜几次最合适；</li>
+<li>怎样组合内部和外部知识。</li>
+</ul>
+<p>因此，第二阶段使用基于结果监督的强化学习，让模型自行采样多条推理轨迹，并根据最终结果获得奖励。</p>
+<p>底层算法采用无 Critic 的 REINFORCE++，对搜索文档 token 继续进行掩码处理。(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</p>
+<p>奖励由三部分组成：</p>
+<p>$$
+R=R_{\text{format}}+R_{\text{answer}}+R_{\text{group}}
+$$</p>
+<hr>
+<h2>5. 格式奖励：保证工具调用合法</h2>
+<p>格式正确时：</p>
+<p>$$
+R_{\text{format}}=0
+$$</p>
+<p>格式错误时：</p>
+<p>$$
+R_{\text{format}}=-2
+$$</p>
+<p>格式错误包括：</p>
+<ul>
+<li>搜索查询没有放进规定标签；</li>
+<li>模型没有调用检索器，却自行编造了 <code class="notranslate">&lt;document&gt;</code>；</li>
+<li>最终答案没有放入规定格式；</li>
+<li>输出中存在不可解析内容。</li>
+</ul>
+<p>它本质上是一个“硬约束惩罚”，防止 RL 训练把工具协议学坏。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h2>6. 答案奖励：判断最终答案是否正确</h2>
+<p>作者没有使用严格的 Exact Match，而是采用 Cover Exact Match：</p>
 <blockquote>
-<p>框架能够运行一个复杂的 Universe 25 模型。</p>
+<p>只要参考答案出现在模型最终答案中，就判断为正确。</p>
 </blockquote>
-<p>而不是：</p>
+<p>正确时奖励为1，否则为0。</p>
+<p>但作者发现模型会奖励投机。例如参考答案是 Titanic，模型可能输出：</p>
 <blockquote>
-<p>LLM Agent 自发重新发现了 Universe 25 现象。</p>
+<p>Avatar、Titanic、Titanic、Avatar……</p>
 </blockquote>
-<hr>
-<h1>8. 实验二：一万个浙大校园 Agent</h1>
-<p>第二个实验模拟了 10,000 个 Agent：</p>
-<ul>
-<li>8,000 名学生；</li>
-<li>1,000 名教师；</li>
-<li>500 名行政人员；</li>
-<li>500 名工作人员。</li>
-</ul>
-<p>校园包含 41 个地点、12 种社会关系；每个 Agent 平均有 27 条关系。模拟运行 336 个 Tick，相当于 7 天。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<h2>性能结果</h2>
-<ul>
-<li>50 个 MasPod；</li>
-<li>每个 Pod 管理 200 个 Agent；</li>
-<li>完整模拟耗时 29.9 小时；</li>
-<li>平均每 Tick 约 320 秒；</li>
-<li>Agent 执行占总运行时间的 93%；</li>
-<li>总共消耗 12.6 亿 Token；</li>
-<li>Prompt Token 占 87.4%；</li>
-<li>记录了 133 万次动作和 47.4 万次地点访问。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</li>
-</ul>
-<p>使用的推理资源包括：</p>
-<ul>
-<li>8 张 A100 80GB；</li>
-<li>4 张 L40 48GB；</li>
-<li>4 张 RTX 4090 24GB；</li>
-<li>Qwen3-Next-80B-A3B-Instruct；</li>
-<li>Qwen3-30B-A3B-Instruct。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</li>
-</ul>
-<h3>这说明什么？</h3>
-<p>它说明框架确实能够：</p>
-<ul>
-<li>调度一万个 Agent；</li>
-<li>分配 Agent 到不同 Pod；</li>
-<li>处理大规模 LLM 请求；</li>
-<li>管理统一环境和关系网络；</li>
-<li>记录大量动作。</li>
-</ul>
-<p>但成本非常高，而且 10,000 个 Agent 运行 7 个模拟日需要接近 30 小时。</p>
-<p>更关键的是：</p>
+<p>只要覆盖了正确答案，就可能获得奖励。</p>
+<p>因此作者进一步规定：</p>
 <blockquote>
-<p>“能够运行 10,000 个 Agent”证明的是系统扩展性，不等于这 10,000 个 Agent 的行为具有社会科学可信度。</p>
+<p>最终答案超过10个词，一律视为错误。</p>
 </blockquote>
-<p>论文对行为真实性的验证主要是：</p>
+<p>于是答案奖励为：</p>
+<p>$$<br>
+R_{\text{answer}}=<br>
+\begin{cases}<br>
+1,&amp;\text{答案不超过10词，且包含参考答案} \<br>
+0,&amp;\text{其他情况}<br>
+\end{cases}<br>
+%%</p>
+<p>这是一个比较简单直接的防止 reward hacking 的办法。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<h3>我的看法</h3>
+<p>这个设计在短答案多跳问答中有效，但非常依赖任务形式。</p>
+<p>如果任务变成：</p>
 <ul>
-<li>活动分布看起来像校园；</li>
-<li>居住区和教学区访问较多；</li>
-<li>一个 Agent 能在后续对话中回忆之前发现的安全问题。</li>
+<li>开放式解释；</li>
+<li>证据引用；</li>
+<li>长答案生成；</li>
+<li>科学问答；</li>
+<li>报告撰写；</li>
 </ul>
-<p>这些证据还比较弱，特别是最后的记忆案例只是一个对话案例，没有大规模定量评估。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
+<p>“十个词以内”显然不再适用。因此它更像是针对当前 benchmark 的工程约束，而不是普适的答案奖励。</p>
 <hr>
-<h1>9. 论文最主要的贡献</h1>
-<p>我认为真正有价值的贡献有三个。</p>
-<h2>贡献一：从 Agent-centric 转向 Society-centric</h2>
-<p>把：</p>
-<ul>
-<li>环境；</li>
-<li>关系；</li>
-<li>动作；</li>
-<li>时间；</li>
-<li>通信；</li>
-</ul>
-<p>从 Agent 内部抽离出来，变成社会级公共服务。</p>
-<p>这是支持动态社会的关键。</p>
-<h2>贡献二：将 LLM 行为纳入受控执行系统</h2>
-<p>不是让 LLM 直接改变世界，而是：</p>
-<p>[<br>
-\text{LLM Plan}<br>
-\rightarrow<br>
-\text{Structured Action}<br>
-\rightarrow<br>
-\text{Controller Check}<br>
-\rightarrow<br>
-\text{Execution}<br>
-]</p>
-<p>这个设计对减少非法动作和系统崩溃很有价值。</p>
-<h2>贡献三：把社会模拟变成可组装的软件系统</h2>
-<p>通过标准插件、数据库适配器、Ray Pod和统一控制面，可以更容易地构建不同社会模拟。</p>
-<p>代码库当前也提供了单机版、Ray 分布式版和可视化 Society-Panel。(<a href="https://github.com/ZJU-LLMs/Agent-Kernel">GitHub</a>)</p>
-<hr>
-<h1>Step 2：顶会审稿意见</h1>
-<h2>总体评价</h2>
-<p>这是一篇<strong>工程思想清晰、系统实现量较大，但实验论证明显不足</strong>的论文。</p>
-<p>它最强的地方是系统架构，不是 Agent 智能，也不是社会科学发现。</p>
-<hr>
-<h2>意见一：缺少真正的基线实验，核心优势大部分是作者自评</h2>
-<p>论文用星级表比较 Agent-Kernel、AgentSociety、AgentScope、CAMEL 等框架，并让自己的方法在适应性、可配置性、可靠性和复用性上全部获得三星。</p>
-<p>但作者也明确说明，这些评分主要来自自己的使用经验和对框架设计的理解，并不是统一实验得到的。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<p>这在顶会论文中远远不够。</p>
-<p>至少需要在相同场景下比较：</p>
-<ul>
-<li>增加和删除 Agent 的时间；</li>
-<li>修改环境需要改多少代码；</li>
-<li>实现相同模拟的代码量；</li>
-<li>吞吐量和延迟；</li>
-<li>内存占用；</li>
-<li>异常恢复时间；</li>
-<li>插件替换开销；</li>
-<li>最大 Agent 数量；</li>
-<li>多次运行结果的一致性。</li>
-</ul>
-<p>还应有消融实验：</p>
-<ul>
-<li>去掉 Controller 会怎样；</li>
-<li>去掉全局 Timer 会怎样；</li>
-<li>共享数据库与 database-per-plugin 有何区别；</li>
-<li>单体架构和微内核架构的实际开发成本有何差异；</li>
-<li>PodManager 使用 Agent 数量和真实负载调度有何差异。</li>
-</ul>
-<p>目前的证据只能说明“系统可以运行”，不能充分证明“微内核架构优于现有架构”。</p>
-<hr>
-<h2>意见二：社会模拟的有效性存在明显循环论证</h2>
-<p>Universe 25实验看起来复现了人口增长、停滞和崩溃，但这些现象可能早已被写进：</p>
-<ul>
-<li>生理状态转移；</li>
-<li>压力变量；</li>
-<li>攻击规则；</li>
-<li>生育规则；</li>
-<li>生命周期；</li>
-<li>关系更新；</li>
-<li>行为选择提示词。</li>
-</ul>
-<p>因此需要回答：</p>
-<blockquote>
-<p>最终现象究竟是 Agent 自发涌现的，还是设计者通过规则和 Prompt 预先植入的？</p>
-</blockquote>
-<p>论文缺少：</p>
-<ul>
-<li>参数敏感性实验；</li>
-<li>多随机种子实验；</li>
-<li>规则消融；</li>
-<li>Prompt 消融；</li>
-<li>不同 LLM 对比；</li>
-<li>与原始实验数据的定量拟合；</li>
-<li>社会科学专家盲评；</li>
-<li>预先注册的验证指标；</li>
-<li>样本外预测。</li>
-</ul>
-<p>校园实验的问题更严重：活动分布“看起来合理”和一段连贯对话，无法证明一万个 Agent 形成了真实可信的社会。</p>
-<p>这篇论文实际上验证了<strong>基础设施容量</strong>，却把一部分结果表述成了<strong>社会现象有效性</strong>。</p>
-<hr>
-<h2>意见三：“可靠、确定、可无限扩展”的表述过强</h2>
-<p>Controller能够验证“目标位置是否存在”，但无法可靠判断：</p>
-<ul>
-<li>Agent 的动机是否合理；</li>
-<li>对话内容是否事实正确；</li>
-<li>记忆总结是否扭曲；</li>
-<li>LLM 是否产生语义幻觉；</li>
-<li>社会决策是否符合现实人类。</li>
-</ul>
-<p>类似地，全局 Timer 可以减少因果倒置，但不能自动使整个系统确定性运行。LLM 采样、异步推理、跨 Pod 消息和服务端批处理仍可能带来运行差异。论文缺少确定性重放实验和故障注入测试。(<a href="https://arxiv.org/html/2512.01610" rel="nofollow">arXiv</a>)</p>
-<p>分布式设计中还有两个潜在问题：</p>
-<ol>
-<li>PodManager承担跨 Pod 通信和集中协调，可能形成瓶颈或单点故障；</li>
-<li>database-per-plugin涉及跨库更新，但论文没有讨论事务一致性、补偿机制和崩溃恢复。</li>
-</ol>
-<p>作者声称 Controller可以水平扩展、Agent 数量可以近乎无限扩展，但没有展示：</p>
-<ul>
-<li>强扩展和弱扩展曲线；</li>
-<li>多节点规模实验；</li>
-<li>节点失效恢复；</li>
-<li>网络分区；</li>
-<li>消息重复与丢失；</li>
-<li>万级以上 Agent；</li>
-<li>Controller与 PodManager的压力上限。</li>
-</ul>
-<p>这些表述需要明显收敛。</p>
-<hr>
-<h1>三个有研究价值的问题</h1>
-<h2>问题一：Agent 微内核中，究竟什么必须放进“内核”？</h2>
-<p>当前 Agent-Kernel的内核包括 Agent、Environment、Action、Controller和 System，范围其实已经不小。</p>
-<p>一个更根本的问题是：</p>
-<blockquote>
-<p>LLM Multi-Agent 系统的最小可信内核应该包含什么？</p>
-</blockquote>
-<p>可以研究：</p>
-<ul>
-<li>最小化 Trusted Computing Base；</li>
-<li>capability-based 权限模型；</li>
-<li>Agent身份和插件身份认证；</li>
-<li>插件隔离与沙箱；</li>
-<li>资源配额；</li>
-<li>内核态动作与用户态动作；</li>
-<li>插件崩溃后的故障隔离；</li>
-<li>动态插件升级的兼容性。</li>
-</ul>
-<p>这会比简单类比微内核更接近真正的 Agent Operating System 研究。</p>
-<hr>
-<h2>问题二：如何实现可重放、因果一致的 LLM 社会模拟？</h2>
-<p>真正科学的社会模拟应能回答：</p>
-<blockquote>
-<p>给定相同初始条件，为什么两次实验不同？差异来自社会随机性，还是系统并发和模型服务？</p>
-</blockquote>
-<p>可以研究：</p>
-<ul>
-<li>逻辑时钟与因果消息；</li>
-<li>event sourcing；</li>
-<li>确定性调度；</li>
-<li>LLM 输出缓存与版本锁定；</li>
-<li>随机种子传播；</li>
-<li>状态快照和检查点；</li>
-<li>跨数据库事务；</li>
-<li>分布式回滚；</li>
-<li>因果轨迹审计；</li>
-<li>Counterfactual replay。</li>
-</ul>
-<p>最终目标不是让所有运行完全一样，而是能够精确解释：</p>
-<h1>[ \text{Outcome Difference}</h1>
-<p>\text{Model Randomness}<br>
-+<br>
-\text{Environment Randomness}<br>
-+<br>
-\text{Scheduling Randomness}<br>
-]</p>
-<hr>
-<h2>问题三：如何区分“真正涌现”与“规则预编码”？</h2>
-<p>这是 LLM 社会模拟最重要、也最困难的问题。</p>
-<p>需要建立一套科学验证方法：</p>
-<ol>
-<li>将部分真实数据作为校准集；</li>
-<li>隐藏另一部分现象作为测试集；</li>
-<li>只根据校准数据设计 Agent；</li>
-<li>检查模型能否预测未见过的社会现象；</li>
-<li>对 Prompt、规则、模型和随机性进行系统消融；</li>
-<li>对输出进行不确定性估计。</li>
-</ol>
-<p>还可以使用：</p>
-<ul>
-<li>Approximate Bayesian Computation；</li>
-<li>Simulation-based inference；</li>
-<li>因果发现；</li>
-<li>参数可识别性分析；</li>
-<li>多模型集成；</li>
-<li>人类行为数据校准。</li>
-</ul>
-<p>只有当系统能预测未被直接编码的结果时，才更有资格称为“涌现”。</p>
-<hr>
-<h1>最终判断</h1>
-<h2>评分</h2>
+<h2>7. Group Reward：奖励“正确且搜索较少”的轨迹</h2>
+<p>这是论文最有意思的设计之一。</p>
+<p>对于同一个问题，模型会采样多条 rollout。例如：</p>
 <markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
-<th>维度</th>
-<th>评价</th>
+<th>轨迹</th>
+<th align="right">是否正确</th>
+<th align="right">搜索次数</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>问题重要性</td>
-<td>8/10</td>
+<td>A</td>
+<td align="right">正确</td>
+<td align="right">3</td>
 </tr>
 <tr>
-<td>架构清晰度</td>
-<td>8/10</td>
+<td>B</td>
+<td align="right">正确</td>
+<td align="right">1</td>
 </tr>
 <tr>
-<td>工程实现</td>
-<td>8/10</td>
+<td>C</td>
+<td align="right">错误</td>
+<td align="right">0</td>
 </tr>
 <tr>
-<td>方法新颖性</td>
-<td>6.5/10</td>
-</tr>
-<tr>
-<td>实验严谨性</td>
-<td>4/10</td>
-</tr>
-<tr>
-<td>社会科学有效性</td>
-<td>3.5/10</td>
-</tr>
-<tr>
-<td>可复现性</td>
-<td>6/10，代码开放但算力门槛很高</td>
-</tr>
-<tr>
-<td>论文表述</td>
-<td>6/10，存在较多过强结论</td>
+<td>D</td>
+<td align="right">正确</td>
+<td align="right">2</td>
 </tr>
 </tbody>
 </table></markdown-accessiblity-table>
-<h2>审稿结论：<strong>Weak Reject</strong></h2>
-<p>作为顶会主会论文，我会给 <strong>Weak Reject</strong>。</p>
-<p>原因不是系统没有价值，而是论文的核心主张包括：</p>
+<p>普通结果奖励会让 A、B、D 都获得相同奖励，因为它们最终都答对了。</p>
+<p>但 R1-Searcher++认为 B 更好：</p>
+<blockquote>
+<p>同样能够答对，B只搜索了一次，说明它更充分地利用了内部知识。</p>
+</blockquote>
+<p>因此，作者在同一问题的正确轨迹中找到搜索次数最少的轨迹，并为它附加 group reward。奖励强度与该组轨迹搜索次数的差异有关，并通过超参数进行裁剪。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<h3>它为什么不是简单地惩罚搜索次数？</h3>
+<p>如果直接设置：</p>
+<p>$$
+R=R_{\text{answer}}-\lambda \times \text{搜索次数}
+$$</p>
+<p>模型可能学会完全不搜索。</p>
+<p>R1-Searcher++的逻辑是：</p>
+<ol>
+<li>首先必须答对；</li>
+<li>然后才比较正确轨迹之间的搜索次数；</li>
+<li>只奖励其中搜索较少的轨迹。</li>
+</ol>
+<p>所以它优化的是：</p>
+<blockquote>
+<p><strong>在保证正确的前提下，尽量少搜索。</strong></p>
+</blockquote>
+<h3>我的看法</h3>
+<p>这个相对奖励比固定的搜索惩罚更合理，因为不同问题所需的搜索次数不同：</p>
 <ul>
-<li>比现有框架更好；</li>
-<li>更可靠；</li>
-<li>更确定；</li>
-<li>更可复用；</li>
-<li>能产生可信社会模拟。</li>
+<li>简单事实问题可能不需要搜索；</li>
+<li>两跳问题可能需要一次；</li>
+<li>三跳且信息分散的问题可能需要多次。</li>
 </ul>
-<p>但目前实验主要证明了：</p>
+<p>但它仍有一个隐含假设：</p>
+<blockquote>
+<p>在所有正确轨迹中，搜索最少的就是最好的。</p>
+</blockquote>
+<p>这个假设并不总成立。对于医疗、法律、新闻等高风险或时效性任务，即使模型内部“碰巧答对”，额外核验也可能是必要的。</p>
+<p>换句话说，这个奖励优化的是<strong>benchmark上的答案正确率—搜索次数权衡</strong>，还没有真正学习“是否需要核验”。</p>
+<hr>
+<h2>8. External Knowledge Memorization：把搜索知识写进模型</h2>
+<p>这是论文标题中“Knowledge Acquisition”的来源，也是最容易被误解的部分。</p>
+<p>它不是在模型外部建立一个长期记忆数据库，而是尝试将搜索结果通过额外训练写入模型参数。</p>
+<h3>具体过程</h3>
+<p>假设模型回答：</p>
+<blockquote>
+<p>Avatar 和 Titanic 哪个更早上映？</p>
+</blockquote>
+<p>模型内部已经知道：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">Avatar was released in 2009
+</code></pre>
+<p>但不知道 Titanic 的上映年份，于是搜索到：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">Titanic was released in 1997
+</code></pre>
+<p>模型最终正确回答 Titanic。</p>
+<p>接下来，系统会：</p>
+<ol>
+<li>从正确 rollout 中提取问题和搜索文档；</li>
+<li>将它们交给一个单独训练的 rewriting model；</li>
+<li>rewriting model 生成一条“不再调用搜索”的内部知识轨迹；</li>
+<li>验证该轨迹答案正确；</li>
+<li>将其加入记忆训练集；</li>
+<li>使用 NLL/SFT 损失继续训练策略模型。</li>
+</ol>
+<p>改写后的轨迹可能类似：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">我记得 Avatar 于2009年上映，
+Titanic 于1997年上映，
+所以 Titanic 更早。
+</code></pre>
+<p>最终优化目标是：</p>
+<p>$$
+L(\theta)=-J_{\text{RL}}(\theta)+\mu L_{\text{memory}}(\theta)
+$$</p>
+<p>其中：</p>
 <ul>
-<li>可以动态增删 Agent；</li>
-<li>可以运行 Universe 25场景；</li>
-<li>可以用大量算力运行一万个 Agent；</li>
-<li>可以记录和调度大量行为。</li>
+<li>(J_{\text{RL}})：让模型探索并学习搜索策略；</li>
+<li>(L_{\text{memory}})：让模型记住搜索得到的知识；</li>
+<li>(\mu)：控制记忆训练的强度。</li>
 </ul>
-<p>这些不足以支撑全部主张。</p>
-<p>如果投稿到系统演示、开源软件或应用展示赛道，我会倾向于接收；如果作者补充严格基线、故障实验、扩展性曲线、消融实验和社会有效性验证，它有机会成为一篇较强的 Agent 基础设施论文。</p>
-<p><strong>我的总体看法是：思想值得关注，工程量很扎实，但目前更像一个优秀平台的技术报告，而不是已经被充分验证的顶会研究成果。</strong></p></div>
+<p>论文中设定 (\mu=0.1)，避免 SFT 记忆损失过强，导致模型再次变成只依赖内部知识。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<hr>
+<h2>9. 整体训练过程举例</h2>
+<p>仍然使用问题：</p>
+<blockquote>
+<p>Avatar 和 Titanic 哪个更早上映？</p>
+</blockquote>
+<p>一次完整训练可能如下。</p>
+<h3>第一步：生成多条轨迹</h3>
+<p><strong>轨迹A</strong></p>
+<pre lang="text" class="notranslate"><code class="notranslate">搜索 Avatar 上映年份
+搜索 Titanic 上映年份
+答案：Titanic
+</code></pre>
+<p>搜索2次，正确。</p>
+<p><strong>轨迹B</strong></p>
+<pre lang="text" class="notranslate"><code class="notranslate">内部知识：Avatar 2009年上映
+搜索 Titanic 上映年份
+答案：Titanic
+</code></pre>
+<p>搜索1次，正确。</p>
+<p><strong>轨迹C</strong></p>
+<pre lang="text" class="notranslate"><code class="notranslate">内部知识：Avatar 2009年上映
+内部知识：Titanic 1999年上映
+答案：Titanic
+</code></pre>
+<p>搜索0次，虽然答案碰巧正确，但中间事实错误。</p>
+<h3>第二步：计算奖励</h3>
+<ul>
+<li>A：获得答案奖励；</li>
+<li>B：获得答案奖励和较少搜索的 group reward；</li>
+<li>C：如果奖励只看最终答案，也可能获得答案奖励。</li>
+</ul>
+<p>这里暴露出结果奖励的一个问题：它不检查中间证据是否正确。后面审稿意见会重点讨论这一点。</p>
+<h3>第三步：知识内部化</h3>
+<p>系统提取 B 中搜索到的“Titanic 1997年上映”，改写成内部知识轨迹，再通过 NLL 损失训练模型。</p>
+<p>作者希望模型以后遇到相似问题时，可以直接调用这一知识。</p>
+<hr>
+<h2>10. 我对核心思想的总体评价</h2>
+<p>这篇论文最值得肯定的地方，不是提出了某个复杂 RL 算法，而是明确指出了当前搜索智能体的一个真实问题：</p>
+<blockquote>
+<p><strong>搜索能力越强，不等于搜索行为越合理。</strong></p>
+</blockquote>
+<p>很多 Agentic RAG 工作只看最终准确率，默认“多搜总比少搜好”。R1-Searcher++开始明确优化：</p>
+<p>$$
+\text{答案质量}+\text{搜索效率}+\text{知识复用}
+$$</p>
+<p>这个研究问题很有价值，也非常贴近实际部署。</p>
+<p>但论文把“辅助 SFT 内化搜索轨迹”称为“持续知识获取”，我认为有些过度包装。目前的方法更准确地说是：</p>
+<blockquote>
+<p><strong>利用成功搜索轨迹进行在线自蒸馏或参数化记忆。</strong></p>
+</blockquote>
+<p>它是否真的形成了稳定、可迁移、长期保留的新知识，实验并没有充分证明。</p>
+<hr>
+<h1>Step 2：通俗讲解实验部分</h1>
+<h2>1. 实验设置</h2>
+<h3>基础模型</h3>
+<p>所有主要方法尽量统一使用：</p>
+<ul>
+<li><strong>Qwen2.5-7B-Instruct</strong></li>
+</ul>
+<p>检索环境为：</p>
+<ul>
+<li>KILT 版本的2019年英文 Wikipedia；</li>
+<li>切分成约2900万个、每段100词的 passage；</li>
+<li>使用 BGE-large-en-v1.5 进行稠密检索。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</li>
+</ul>
+<hr>
+<h2>2. 训练数据</h2>
+<h3>Stage 1：SFT冷启动</h3>
+<p>共805条样本：</p>
+<ul>
+<li>HotpotQA：720条；</li>
+<li>2WikiMultiHopQA：85条。</li>
+</ul>
+<p>训练6个 epoch，batch size 为64，学习率为 (2\times10^{-5})。</p>
+<h3>Stage 2：RL训练</h3>
+<p>共8142条样本：</p>
+<ul>
+<li>HotpotQA：4561条；</li>
+<li>2WikiMultiHopQA：3581条。</li>
+</ul>
+<p>每个问题采样16条 rollout：</p>
+<ul>
+<li>train batch size：1024；</li>
+<li>rollout batch size：64；</li>
+<li>学习率：(2\times10^{-6})；</li>
+<li>训练1个 epoch；</li>
+<li>最大搜索次数：8；</li>
+<li>KL系数：(10^{-4})；</li>
+<li>记忆损失权重 (\mu=0.1)；</li>
+<li>group reward 裁剪参数 (\eta=2)。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</li>
+</ul>
+<p>所以论文所说的“约9000条训练数据”，是两个阶段数据量相加后的近似表述。</p>
+<hr>
+<h2>3. 测试数据</h2>
+<p>使用四个多跳问答数据集：</p>
+<ul>
+<li>HotpotQA；</li>
+<li>2WikiMultiHopQA；</li>
+<li>Bamboogle；</li>
+<li>Musique。</li>
+</ul>
+<p>其中：</p>
+<ul>
+<li>HotpotQA、2Wiki属于域内测试；</li>
+<li>Bamboogle、Musique属于域外测试。</li>
+</ul>
+<p>HotpotQA、2Wiki和Musique均随机抽取500条验证样本，Bamboogle使用完整测试集。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<p>评价指标包括：</p>
+<ul>
+<li><strong>F1</strong>：预测答案和标准答案的词级重合度；</li>
+<li><strong>LLM-as-Judge</strong>：由 GPT-4o-mini 判断答案是否正确；</li>
+<li><strong>RC，Retrieval Count</strong>：平均搜索次数。</li>
+</ul>
+<hr>
+<h2>4. 主实验结果怎么看？</h2>
+<p>平均结果如下：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>方法</th>
+<th align="right">平均F1</th>
+<th align="right">平均LLM Judge</th>
+<th align="right">平均搜索次数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1-Searcher</td>
+<td align="right"><strong>45.6</strong></td>
+<td align="right">52.9</td>
+<td align="right">2.30</td>
+</tr>
+<tr>
+<td>Search-R1</td>
+<td align="right">40.3</td>
+<td align="right">48.6</td>
+<td align="right">3.42</td>
+</tr>
+<tr>
+<td>R1-Searcher++</td>
+<td align="right">45.3</td>
+<td align="right"><strong>55.2</strong></td>
+<td align="right"><strong>1.61</strong></td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</p>
+<h3>结果一：搜索次数明显下降</h3>
+<p>相较于：</p>
+<ul>
+<li>R1-Searcher：搜索次数从2.30下降到1.61，约减少30%；</li>
+<li>Search-R1：从3.42下降到1.61，约减少52.9%。</li>
+</ul>
+<p>这说明 group reward 确实让模型减少了不必要的搜索。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</p>
+<h3>结果二：LLM Judge 指标提高</h3>
+<p>R1-Searcher++的平均 LLM-as-Judge 为55.2，高于 R1-Searcher 的52.9。</p>
+<p>论文所称“提升4.3%”，实际上更接近相对提升：</p>
+<p>$$
+\frac{55.2-52.9}{52.9}\approx4.35%
+$$</p>
+<p>而不是提高4.3个百分点。</p>
+<h3>结果三：F1并没有全面超过R1-Searcher</h3>
+<p>这一点很重要。</p>
+<p>R1-Searcher++平均F1为45.3，而 R1-Searcher 为45.6，前者实际上略低。</p>
+<p>具体来看：</p>
+<ul>
+<li>HotpotQA：59.0，对手60.4；</li>
+<li>2Wiki：61.2，对手62.8；</li>
+<li>Bamboogle：60.8，对手59.0；</li>
+<li>Musique：33.8，对手35.7。</li>
+</ul>
+<p>因此更准确的结论是：</p>
+<blockquote>
+<p>R1-Searcher++以几乎不损失平均F1为代价，大幅降低搜索次数，并提高了LLM-as-Judge指标。</p>
+</blockquote>
+<p>我认为这已经是一个有价值的结果，但论文使用“全面超越”等表述略显夸张。</p>
+<hr>
+<h2>5. 消融实验</h2>
+<p>作者分别移除：</p>
+<ul>
+<li>SFT阶段；</li>
+<li>RL阶段；</li>
+<li>group reward；</li>
+<li>外部知识记忆损失；</li>
+<li>同时移除 group reward 和记忆损失。</li>
+</ul>
+<p>完整模型在 Bamboogle 上为：</p>
+<ul>
+<li>F1：60.8；</li>
+<li>LLM Judge：59.2；</li>
+<li>搜索次数：1.74。</li>
+</ul>
+<p>移除 group reward 后：</p>
+<ul>
+<li>F1降至58.3；</li>
+<li>Judge降至56.8；</li>
+<li>搜索次数增加到1.91。</li>
+</ul>
+<p>移除记忆机制后：</p>
+<ul>
+<li>F1降至58.1；</li>
+<li>Judge降至57.2；</li>
+<li>搜索次数增加到1.84。</li>
+</ul>
+<p>在 Musique 上，移除记忆机制后下降更明显：</p>
+<ul>
+<li>F1从33.8降至31.0；</li>
+<li>Judge从32.8降至29.4。(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</li>
+</ul>
+<h3>我的看法</h3>
+<p>消融说明两个组件都有贡献，但还不能证明其解释机制。</p>
+<p>特别是“移除记忆损失后性能下降”，只能说明：</p>
+<blockquote>
+<p>增加这些内部化轨迹进行训练有帮助。</p>
+</blockquote>
+<p>它不能直接证明：</p>
+<blockquote>
+<p>模型成功记住了搜索到的具体知识，并能在未来不搜索地调用它。</p>
+</blockquote>
+<p>要证明后者，需要专门设计“先获取、后测试”的记忆实验。</p>
+<hr>
+<h2>6. 在线搜索实验</h2>
+<p>训练阶段使用的是静态 Wikipedia 检索库，但在线测试时换成：</p>
+<ul>
+<li>Google搜索API；</li>
+<li>使用 GPT-4o-mini 对网页进行摘要；</li>
+<li>再将摘要返回给模型。</li>
+</ul>
+<p>在 Bamboogle 上：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>方法</th>
+<th align="right">F1</th>
+<th align="right">LLM Judge</th>
+<th align="right">搜索次数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Search-o1</td>
+<td align="right">52.9</td>
+<td align="right">52.0</td>
+<td align="right"><strong>1.18</strong></td>
+</tr>
+<tr>
+<td>R1-Searcher</td>
+<td align="right">67.5</td>
+<td align="right">68.8</td>
+<td align="right">1.72</td>
+</tr>
+<tr>
+<td>Search-R1</td>
+<td align="right">69.3</td>
+<td align="right">67.2</td>
+<td align="right">1.92</td>
+</tr>
+<tr>
+<td>R1-Searcher++</td>
+<td align="right"><strong>77.5</strong></td>
+<td align="right"><strong>76.0</strong></td>
+<td align="right">1.70</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>在 Frames 上，R1-Searcher++也取得最高指标，但相对 R1-Searcher 的提升比较小：</p>
+<ul>
+<li>F1：33.8 对33.3；</li>
+<li>Judge：39.0 对38.0。(<a href="https://arxiv.org/pdf/2505.17005" title="R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">arXiv</a>)</li>
+</ul>
+<h3>我的看法</h3>
+<p>这个实验说明搜索策略能够从本地 Wikipedia 检索迁移到在线搜索环境，这是一个明显优点。</p>
+<p>但在线管线中加入了 GPT-4o-mini 摘要器，所以最终系统并非纯7B模型。虽然基线看起来使用了相同环境，但论文仍应更详细报告：</p>
+<ul>
+<li>网页摘要调用成本；</li>
+<li>延迟；</li>
+<li>token消耗；</li>
+<li>原始网页和摘要质量的影响；</li>
+<li>不使用 GPT-4o-mini 时的结果。</li>
+</ul>
+<hr>
+<h2>7. 搜索效率分析</h2>
+<p>在总计1625个测试问题上：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>方法</th>
+<th align="right">正确数 / 正确题平均搜索</th>
+<th align="right">错误数 / 错误题平均搜索</th>
+<th align="right">总平均搜索</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1-Searcher</td>
+<td align="right">853 / 2.16</td>
+<td align="right">772 / 2.52</td>
+<td align="right">2.33</td>
+</tr>
+<tr>
+<td>Search-R1</td>
+<td align="right">761 / 3.30</td>
+<td align="right">864 / 3.60</td>
+<td align="right">3.46</td>
+</tr>
+<tr>
+<td>R1-Searcher++</td>
+<td align="right"><strong>881 / 1.41</strong></td>
+<td align="right"><strong>744 / 1.78</strong></td>
+<td align="right"><strong>1.58</strong></td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</p>
+<p>这个结果很有说服力：</p>
+<ul>
+<li>它并不是单纯少搜但答错更多；</li>
+<li>正确数量反而最高；</li>
+<li>正确题和错误题的搜索次数都明显减少。</li>
+</ul>
+<p>这表明模型确实学到了一定程度的“搜索节制”。</p>
+<p>但“搜索少”究竟来自：</p>
+<ol>
+<li>更准确的内部知识判断；</li>
+<li>SFT让模型偏向不搜索；</li>
+<li>记忆了训练集事实；</li>
+<li>group reward直接压低搜索行为；</li>
+</ol>
+<p>论文还没有完全区分。</p>
+<hr>
+<h1>Step 3：顶会审稿意见</h1>
+<h2>优点</h2>
+<p>论文抓住了搜索智能体中的重要问题：<strong>检索并不是越多越好</strong>。方法将答案奖励、搜索效率奖励和知识内部化结合起来，思路清晰，工程上可实现。实验也显示，在维持相近回答质量的同时，搜索次数可以显著下降。</p>
+<hr>
+<h2>意见一：论文没有真正证明“知识获取与记忆”</h2>
+<p>这是最核心的问题。</p>
+<p>所谓 external knowledge memorization，本质上是：</p>
+<ol>
+<li>从成功搜索轨迹中提取文档；</li>
+<li>使用 rewriting model 生成无搜索轨迹；</li>
+<li>再使用 NLL/SFT 训练策略模型。</li>
+</ol>
+<p>这更像在线自蒸馏，而不是被严格验证的持续知识获取。</p>
+<p>现有消融只能证明辅助训练数据有用，无法回答：</p>
+<ul>
+<li>模型具体记住了哪些新事实？</li>
+<li>经过多少后续更新仍能保留？</li>
+<li>是否能在改写问题、组合问题中调用？</li>
+<li>是否只是记住训练问题的答案模板？</li>
+<li>新知识是否破坏已有知识？</li>
+<li>如果搜索结果错误或过时，模型是否会永久记错？</li>
+</ul>
+<p>作者应增加明确的 acquire–retain–recall 实验：</p>
+<ol>
+<li>选择基础模型确定不知道的新事实；</li>
+<li>让模型通过搜索获得这些事实；</li>
+<li>后续禁止搜索；</li>
+<li>测试原问题、改写问题和组合推理问题；</li>
+<li>在继续训练若干轮后再次测试遗忘；</li>
+<li>注入冲突知识，测试更新与纠错能力。</li>
+</ol>
+<p>没有这些实验，“持续丰富内部知识”的核心表述缺乏充分证据。</p>
+<hr>
+<h2>意见二：准确率与效率结论不够严格，复现性也不足</h2>
+<p>论文主要优势体现在 LLM-as-Judge 和搜索次数上，但平均F1为45.3，实际上略低于 R1-Searcher 的45.6。因此“超越强基线”高度依赖 GPT-4o-mini Judge，而不是所有客观指标都更好。测试集又主要由三个数据集各随机抽取500条组成，论文没有报告多次随机种子、置信区间或显著性检验。(<a href="https://ar5iv.org/html/2505.17005v1" title="[2505.17005] R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning" rel="nofollow">ar5iv</a>)</p>
+<p>此外，“效率”只使用搜索次数衡量，没有报告：</p>
+<ul>
+<li>总生成 token；</li>
+<li>检索延迟；</li>
+<li>rewriting model 训练成本；</li>
+<li>16次 rollout 的训练成本；</li>
+<li>Google API 与 GPT-4o-mini 摘要成本；</li>
+<li>端到端准确率—成本 Pareto 曲线。</li>
+</ul>
+<p>截至当前，官方仓库 README 仍将模型、训练数据和 Quick Start 标记为“coming soon”，仓库也未提供论文所需的完整训练复现流程，这明显削弱了可验证性。(<a href="https://github.com/RUCAIBox/R1-Searcher-plus" title="GitHub - RUCAIBox/R1-Searcher-plus: R1-Searcher++: Incentivizing the Dynamic Knowledge Acquisition of LLMs via Reinforcement Learning · GitHub">GitHub</a>)</p>
+<hr>
+<h2>三个有研究价值的问题</h2>
+<h3>1. 如何学习真正基于不确定性的搜索决策？</h3>
+<p>当前方法奖励“正确轨迹中搜索最少的一个”，但搜索需求并不等于搜索次数。</p>
+<p>更合理的方向是让模型显式估计：</p>
+<h1>[<br>
+\text{搜索价值}</h1>
+<h2>P(\text{搜索后纠正答案})</h2>
+<p>\text{搜索成本}<br>
+]</p>
+<p>也就是学习 Value of Information：</p>
+<ul>
+<li>当前内部答案置信度多高？</li>
+<li>搜索可能带来多少信息增益？</li>
+<li>是否需要核验而不是补充知识？</li>
+<li>再搜索一次是否仍值得？</li>
+</ul>
+<p>这可能比“正确且最少搜索”更适合真实环境。</p>
+<h3>2. 如何实现可纠错、可追溯的参数化记忆？</h3>
+<p>把网络内容直接写进参数存在严重风险：</p>
+<ul>
+<li>信息可能错误；</li>
+<li>信息可能过时；</li>
+<li>不同来源可能冲突；</li>
+<li>写入后难以知道出处；</li>
+<li>删除或更新非常困难。</li>
+</ul>
+<p>值得研究一种混合记忆机制：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">短期外部记忆
+    ↓ 多次验证
+候选长期记忆
+    ↓ 可信度、时效性、来源检查
+参数化或结构化长期记忆
+</code></pre>
+<p>同时为每条知识保留来源、时间戳和置信度，使模型能够更新或撤销记忆。</p>
+<h3>3. 如何联合优化“搜索、验证、记忆和遗忘”？</h3>
+<p>当前流程将搜索策略和知识内部化简单地组合在一起，但四个过程实际上相互影响：</p>
+<ul>
+<li>搜索决定获得什么知识；</li>
+<li>验证决定知识是否可信；</li>
+<li>记忆决定哪些信息进入长期状态；</li>
+<li>遗忘决定旧知识何时被替换。</li>
+</ul>
+<p>一个更完整的问题是把它们建模成长期决策过程：</p>
+<p>$$
+\text{Search}
+\rightarrow
+\text{Verify}
+\rightarrow
+\text{Store}
+\rightarrow
+\text{Reuse}
+\rightarrow
+\text{Update/Forget}
+$$</p>
+<p>奖励不仅考虑当前问题是否答对，还考虑这条知识对未来任务的长期收益。这会比当前单轮问答 RL 更接近真正的自进化智能体。</p>
+<hr>
+<h2>最终判断</h2>
+<h3><strong>Weak Reject / Borderline Reject</strong></h3>
+<p>理由如下：</p>
+<ul>
+<li>研究问题重要，方法直观且实用；</li>
+<li>搜索次数下降明显，在线搜索迁移结果也有价值；</li>
+<li>group reward 与成功轨迹内部化具有一定新意。</li>
+</ul>
+<p>但对于顶会标准，当前版本存在两个关键缺口：</p>
+<ol>
+<li>标题和核心叙事强调“动态知识获取”，却没有直接证明知识被稳定、泛化地记住；</li>
+<li>结果依赖单一7B模型、有限测试子集和 LLM Judge，缺乏统计检验、完整成本分析与可复现代码。</li>
+</ol>
+<p>补充严格的知识记忆实验、多个随机种子、准确率—成本曲线以及完整代码后，我会考虑提升至 <strong>Weak Accept</strong>。</p>
+<hr>
+<h1>Step 4：组会简要汇报</h1>
+<p>R1-Searcher++研究如何让大模型动态选择内部知识或外部搜索。方法先用SFT教会模型内部推理与搜索调用格式，再通过RL奖励“答案正确且搜索较少”的轨迹，减少模型对检索器的过度依赖。同时，它将正确轨迹中的搜索文档改写为无搜索推理数据，通过辅助SFT写入模型参数。基于Qwen2.5-7B的实验显示，其LLM评测正确率优于R1-Searcher，平均搜索次数由2.30降至1.61，并能迁移到在线搜索环境。但其平均F1并未超过R1-Searcher，且尚未严格证明搜索知识能够被长期、泛化地记忆。</p></div>
 <div style="font-size:small;margin-top:8px;float:right;"></div>
 
 </div>
@@ -848,6 +848,6 @@ document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
 
 
 </script>
-
+<script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 </html>
