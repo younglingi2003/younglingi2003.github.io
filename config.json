@@ -14,20 +14,4 @@
   "onePageListNum": 10,
   "showPostSource": 1,
   "needComment": 0
-}{
-    "title": "casualhhh 的个人博客",
-    "subTitle": "记录 Agent、LLM、强化学习与论文阅读",
-    "avatarUrl": "https://github.com/younglingi2003.png",
-    "displayTitle": "casualhhh",
-    "GMEEK_VERSION": "last",
-    "email": "younglingi2003@users.noreply.github.com",
-    "i18n": "CN",
-    "UTC": 8,
-    "themeMode": "fix",
-    "dayTheme": "dark",
-    "nightTheme": "dark-blue",
-    "urlMode": "pinyin",
-    "onePageListNum": 10,
-    "showPostSource": 1,
-    "needComment": 0
 }
