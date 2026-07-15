@@ -2,23 +2,24 @@ name: build Gmeek
 
 on:
   workflow_dispatch:
-  issues:
-    types: [opened, edited, labeled, unlabeled, reopened]
-  schedule:
-    - cron: "0 16 * * *"
+    inputs:
+      issue_numbers:
+        description: "要更新的 Issue 编号，例如 5 或 3,5,8；留空或填 0 表示更新全部文章"
+        required: false
+        default: ""
+        type: string
 
-# Only one generator may update the generated files at a time. Each queued run
-# checks out the latest main branch when it starts, so older event snapshots
-# cannot overwrite newer blog data.
+# Manual publishing only. Runs are queued to prevent generated files from
+# overwriting one another if the button is clicked more than once.
 concurrency:
   group: gmeek-${{ github.repository }}
+  queue: max
   cancel-in-progress: false
 
 jobs:
   build:
     name: Generate blog
     runs-on: ubuntu-24.04
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event.repository.owner.id == github.event.sender.id }}
     permissions: write-all
     steps:
       - name: Checkout
@@ -57,10 +58,27 @@ jobs:
           pip install -r /opt/Gmeek/requirements.txt
 
       - name: Generate new html
+        env:
+          ISSUE_NUMBERS: ${{ inputs.issue_numbers }}
         run: |
           cp -r ./* /opt/Gmeek/
           cd /opt/Gmeek/
-          python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number '${{ github.event.issue.number }}'
+          NORMALIZED="${ISSUE_NUMBERS// /}"
+          if [ -z "$NORMALIZED" ] || [ "$NORMALIZED" = "0" ]; then
+            echo "Full rebuild: update all articles"
+            python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number ''
+          else
+            IFS=',' read -ra NUMBERS <<< "$ISSUE_NUMBERS"
+            for number in "${NUMBERS[@]}"; do
+              number="$(echo "$number" | xargs)"
+              if ! [[ "$number" =~ ^[1-9][0-9]*$ ]]; then
+                echo "Invalid Issue number: $number"
+                exit 1
+              fi
+              echo "Update Issue #$number"
+              python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number "$number"
+            done
+          fi
           cp -a /opt/Gmeek/docs ${{ github.workspace }} 
           cp -a /opt/Gmeek/backup ${{ github.workspace }} 
           cp /opt/Gmeek/blogBase.json ${{ github.workspace }} 
@@ -74,7 +92,6 @@ jobs:
             echo "nothing to commit"
           else
             git commit -m '🎉 auto update by Gmeek action'
-            git pull --rebase origin main
             git push origin HEAD:main
           fi
           
