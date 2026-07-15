@@ -3,19 +3,29 @@ name: build Gmeek
 on:
   workflow_dispatch:
   issues:
-    types: [opened, edited]
+    types: [opened, edited, labeled, unlabeled, reopened]
   schedule:
     - cron: "0 16 * * *"
-    
+
+# Only one generator may update the generated files at a time. Each queued run
+# checks out the latest main branch when it starts, so older event snapshots
+# cannot overwrite newer blog data.
+concurrency:
+  group: gmeek-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Generate blog
     runs-on: ubuntu-24.04
-    if: ${{ github.event.repository.owner.id == github.event.sender.id || github.event_name == 'schedule' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event.repository.owner.id == github.event.sender.id }}
     permissions: write-all
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Setup Pages
         id: pages
@@ -59,10 +69,14 @@ jobs:
         run: |
           git config --local user.email "$(jq -r ".email" config.json)"
           git config --local user.name "${{ github.repository_owner }}"
-          git add .
-          git commit -a -m '🎉auto update by Gmeek action' || echo "nothing to commit"
-          git push || echo "nothing to push"
-          sleep 3
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m '🎉 auto update by Gmeek action'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -77,9 +91,6 @@ jobs:
       contents: write
       pages: write
       id-token: write
-    concurrency:
-      group: "pages"
-      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
