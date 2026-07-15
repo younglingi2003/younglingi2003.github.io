@@ -9,8 +9,8 @@ on:
         default: ""
         type: string
 
-# Manual publishing only. Runs are queued to prevent generated files from
-# overwriting one another if the button is clicked more than once.
+# Manual publishing only. Queue runs so generated files cannot overwrite one
+# another when the publish button is clicked more than once.
 concurrency:
   group: gmeek-${{ github.repository }}
   queue: max
@@ -20,98 +20,366 @@ jobs:
   build:
     name: Generate blog
     runs-on: ubuntu-24.04
-    permissions: write-all
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      issues: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: main
-          fetch-depth: 0
+          fetch-depth: 1
+
+      - name: Validate source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Please run this workflow from the main branch."
+            exit 1
+          fi
+          echo "BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      - name: Get config.json
+      - name: Validate configuration
+        shell: bash
         run: |
-          echo "====== check config.josn file ======"
-          cat config.json
-          echo "====== check config.josn end  ======"
-          sudo apt-get install jq
+          set -euo pipefail
+          jq -e 'type == "object" and (.GMEEK_VERSION | type == "string")' config.json > /dev/null
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.8
-
-      - name: Clone source code
-        run: |
-          GMEEK_VERSION=$(jq -r ".GMEEK_VERSION" config.json)
-          git clone https://github.com/Meekdai/Gmeek.git /opt/Gmeek;
-          cd /opt/Gmeek/
-          lastTag=$(git describe --tags `git rev-list --tags --max-count=1`)
-          if [ $GMEEK_VERSION == 'last' ]; then git checkout $lastTag; else git checkout $GMEEK_VERSION; fi;
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r /opt/Gmeek/requirements.txt
-
-      - name: Generate new html
+      - name: Decide publish mode
+        shell: bash
         env:
           ISSUE_NUMBERS: ${{ inputs.issue_numbers }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp -r ./* /opt/Gmeek/
-          cd /opt/Gmeek/
-          NORMALIZED="${ISSUE_NUMBERS// /}"
-          if [ -z "$NORMALIZED" ] || [ "$NORMALIZED" = "0" ]; then
-            echo "Full rebuild: update all articles"
-            python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number ''
+          set -euo pipefail
+
+          raw="${ISSUE_NUMBERS//，/,}"
+          raw="${raw//$'\r'/,}"
+          raw="${raw//$'\n'/,}"
+          raw="${raw//[[:space:]]/}"
+
+          if [ -z "$raw" ] || [ "$raw" = "0" ]; then
+            echo "PUBLISH_MODE=full" >> "$GITHUB_ENV"
+            echo "ISSUE_NUMBERS_NORMALIZED=" >> "$GITHUB_ENV"
+            echo "Full rebuild requested."
+            exit 0
+          fi
+
+          IFS=',' read -ra candidates <<< "$raw"
+          declare -A seen=()
+          numbers=()
+          for number in "${candidates[@]}"; do
+            if ! [[ "$number" =~ ^[1-9][0-9]*$ ]]; then
+              echo "Invalid Issue number: $number"
+              exit 1
+            fi
+            if [ -z "${seen[$number]+x}" ]; then
+              seen[$number]=1
+              numbers+=("$number")
+            fi
+          done
+
+          normalized="$(IFS=,; echo "${numbers[*]}")"
+          force_full=0
+          reasons=()
+
+          if [ ! -s blogBase.json ]; then
+            force_full=1
+            reasons+=("blogBase.json is missing")
           else
-            IFS=',' read -ra NUMBERS <<< "$ISSUE_NUMBERS"
-            for number in "${NUMBERS[@]}"; do
-              number="$(echo "$number" | xargs)"
-              if ! [[ "$number" =~ ^[1-9][0-9]*$ ]]; then
-                echo "Invalid Issue number: $number"
+            if ! jq -s -e '.[0] as $cfg | .[1] as $base | ($cfg | to_entries | all($base[.key] == .value))' config.json blogBase.json > /dev/null; then
+              force_full=1
+              reasons+=("blog configuration changed")
+            fi
+
+            while IFS= read -r -d '' file; do
+              target="docs/${file#static/}"
+              if [ ! -f "$target" ] || ! cmp -s "$file" "$target"; then
+                force_full=1
+                reasons+=("static file changed: ${file#static/}")
+              fi
+            done < <(find static -type f -print0)
+
+            current_manifest="$RUNNER_TEMP/current-static-files"
+            find static -type f -printf '%P\n' | LC_ALL=C sort > "$current_manifest"
+            if [ ! -f .gmeek-static-files ] || ! cmp -s .gmeek-static-files "$current_manifest"; then
+              force_full=1
+              reasons+=("static file list changed")
+            fi
+
+            labels_file="$RUNNER_TEMP/repository-labels.json"
+            echo '[]' > "$labels_file"
+            page=1
+            while true; do
+              page_file="$RUNNER_TEMP/repository-labels-$page.json"
+              curl --fail --silent --show-error --location \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/labels?per_page=100&page=$page" \
+                -o "$page_file"
+              page_count="$(jq 'length' "$page_file")"
+              jq -s '.[0] + .[1]' "$labels_file" "$page_file" > "$labels_file.next"
+              mv "$labels_file.next" "$labels_file"
+              if [ "$page_count" -lt 100 ]; then
+                break
+              fi
+              page=$((page + 1))
+            done
+
+            while IFS=$'\t' read -r label_name old_color; do
+              current_color="$(jq -r --arg name "$label_name" '.[] | select(.name == $name) | .color' "$labels_file" | head -n 1)"
+              if [ -z "$current_color" ] || [ "${current_color,,}" != "${old_color,,}" ]; then
+                force_full=1
+                reasons+=("repository label changed: $label_name")
+              fi
+            done < <(jq -r '(.labelColorDict // {}) | to_entries[] | [.key, (.value | ltrimstr("#"))] | @tsv' blogBase.json)
+          fi
+
+          issue_dir="$RUNNER_TEMP/gmeek-issues"
+          mkdir -p "$issue_dir"
+          for number in "${numbers[@]}"; do
+            issue_file="$issue_dir/$number.json"
+            http_code="$(curl --silent --show-error --location \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -o "$issue_file" -w '%{http_code}' \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/$number")"
+
+            old_exists=0
+            if [ -s blogBase.json ] && jq -e --arg key "P$number" '.postListJson[$key] != null' blogBase.json > /dev/null; then
+              old_exists=1
+            fi
+
+            if [ "$http_code" != "200" ]; then
+              if [ "$old_exists" = "1" ]; then
+                force_full=1
+                reasons+=("Issue #$number was deleted")
+                continue
+              fi
+              echo "Issue #$number does not exist."
+              exit 1
+            fi
+
+            if jq -e 'has("pull_request")' "$issue_file" > /dev/null; then
+              echo "#$number is a pull request, not a blog Issue."
+              exit 1
+            fi
+
+            state="$(jq -r '.state' "$issue_file")"
+            label_count="$(jq '.labels | length' "$issue_file")"
+            new_title="$(jq -r '.title' "$issue_file")"
+            old_title=""
+            if [ "$old_exists" = "1" ]; then
+              old_title="$(jq -r --arg key "P$number" '.postListJson[$key].postTitle' blogBase.json)"
+            fi
+
+            if [ "$state" != "open" ]; then
+              force_full=1
+              reasons+=("Issue #$number is closed")
+            fi
+            if [ "$label_count" = "0" ]; then
+              force_full=1
+              reasons+=("Issue #$number has no labels")
+            fi
+            if [ -n "$old_title" ] && [ "$old_title" != "$new_title" ]; then
+              force_full=1
+              reasons+=("Issue #$number title changed")
+            fi
+
+            if [ -s blogBase.json ]; then
+              duplicate_title_count="$(jq --arg key "P$number" --arg title "$new_title" '[.postListJson | to_entries[] | select(.key != $key and .value.postTitle == $title)] | length' blogBase.json)"
+              if [ "$duplicate_title_count" != "0" ]; then
+                echo "Issue #$number has the same title as another article. Titles must be unique."
                 exit 1
               fi
+            fi
+          done
+
+          if [ "$force_full" = "1" ]; then
+            echo "PUBLISH_MODE=full" >> "$GITHUB_ENV"
+            echo "Automatically switched to a full rebuild:"
+            printf ' - %s\n' "${reasons[@]}"
+          else
+            echo "PUBLISH_MODE=incremental" >> "$GITHUB_ENV"
+            echo "Incremental update: $normalized"
+          fi
+          echo "ISSUE_NUMBERS_NORMALIZED=$normalized" >> "$GITHUB_ENV"
+
+      - name: Clone Gmeek
+        shell: bash
+        run: |
+          set -euo pipefail
+          GMEEK_VERSION="$(jq -er '.GMEEK_VERSION' config.json)"
+          git clone --depth 1 --branch "$GMEEK_VERSION" \
+            https://github.com/Meekdai/Gmeek.git /opt/Gmeek
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check --no-input -r /opt/Gmeek/requirements.txt
+
+      - name: Generate website
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cp -r ./* /opt/Gmeek/
+          cd /opt/Gmeek
+
+          if [ "$PUBLISH_MODE" = "full" ]; then
+            echo "Full rebuild: update all articles"
+            python Gmeek.py "$GH_TOKEN" "$GITHUB_REPOSITORY" --issue_number ''
+          else
+            IFS=',' read -ra numbers <<< "$ISSUE_NUMBERS_NORMALIZED"
+            for number in "${numbers[@]}"; do
               echo "Update Issue #$number"
-              python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number "$number"
+              python Gmeek.py "$GH_TOKEN" "$GITHUB_REPOSITORY" --issue_number "$number"
             done
           fi
-          cp -a /opt/Gmeek/docs ${{ github.workspace }} 
-          cp -a /opt/Gmeek/backup ${{ github.workspace }} 
-          cp /opt/Gmeek/blogBase.json ${{ github.workspace }} 
-          
-      - name: update html
+
+          test -d /opt/Gmeek/docs
+          test -d /opt/Gmeek/backup
+          rm -rf "${GITHUB_WORKSPACE:?}/docs" "${GITHUB_WORKSPACE:?}/backup"
+          cp -a /opt/Gmeek/docs "$GITHUB_WORKSPACE/docs"
+          cp -a /opt/Gmeek/backup "$GITHUB_WORKSPACE/backup"
+          cp /opt/Gmeek/blogBase.json "$GITHUB_WORKSPACE/blogBase.json"
+          find "$GITHUB_WORKSPACE/static" -type f -printf '%P\n' | LC_ALL=C sort > "$GITHUB_WORKSPACE/.gmeek-static-files"
+
+      - name: Validate generated website
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --local user.email "$(jq -r ".email" config.json)"
-          git config --local user.name "${{ github.repository_owner }}"
+          set -euo pipefail
+          jq -e '.postListJson | type == "object"' blogBase.json > /dev/null
+          test -s docs/index.html
+          test -s docs/postList.json
+          test -s docs/rss.xml
+
+          while IFS= read -r html_file; do
+            test -s "$html_file"
+          done < <(jq -r '.postListJson[]?.htmlDir' blogBase.json)
+
+          unique_html_count="$(jq '[.postListJson[]?.htmlDir] | unique | length' blogBase.json)"
+          article_count="$(jq '.postListJson | length' blogBase.json)"
+          if [ "$unique_html_count" != "$article_count" ]; then
+            echo "Two articles generated the same HTML path. Rename one of them."
+            exit 1
+          fi
+
+          if [ "$PUBLISH_MODE" = "full" ] && [ "$(jq '.singlePage | length' blogBase.json)" = "0" ]; then
+            issues_file="$RUNNER_TEMP/open-blog-issues.json"
+            echo '[]' > "$issues_file"
+            page=1
+            while true; do
+              page_file="$RUNNER_TEMP/open-blog-issues-$page.json"
+              curl --fail --silent --show-error --location \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues?state=open&per_page=100&page=$page" \
+                -o "$page_file"
+              page_count="$(jq 'length' "$page_file")"
+              jq -s '.[0] + .[1]' "$issues_file" "$page_file" > "$issues_file.next"
+              mv "$issues_file.next" "$issues_file"
+              if [ "$page_count" -lt 100 ]; then
+                break
+              fi
+              page=$((page + 1))
+            done
+            expected_keys="$(jq -c '[.[] | select(has("pull_request") | not) | select((.labels | length) > 0) | "P\(.number)"] | sort' "$issues_file")"
+            actual_keys="$(jq -c '[.postListJson | keys[]] | sort' blogBase.json)"
+            if [ "$expected_keys" != "$actual_keys" ]; then
+              echo "Generated article list does not match the current open, labeled Issues."
+              echo "Expected: $expected_keys"
+              echo "Actual:   $actual_keys"
+              exit 1
+            fi
+          fi
+
+          if [ "$PUBLISH_MODE" = "incremental" ]; then
+            IFS=',' read -ra numbers <<< "$ISSUE_NUMBERS_NORMALIZED"
+            for number in "${numbers[@]}"; do
+              key="P$number"
+              issue_file="$RUNNER_TEMP/gmeek-issues/$number.json"
+              jq -e --arg key "$key" '.postListJson[$key] != null' blogBase.json > /dev/null
+
+              expected_title="$(jq -r '.title' "$issue_file")"
+              actual_title="$(jq -r --arg key "$key" '.postListJson[$key].postTitle' blogBase.json)"
+              [ "$expected_title" = "$actual_title" ]
+
+              expected_labels="$(jq -c '[.labels[].name] | sort' "$issue_file")"
+              actual_labels="$(jq -c --arg key "$key" '.postListJson[$key].labels | sort' blogBase.json)"
+              [ "$expected_labels" = "$actual_labels" ]
+            done
+          fi
+
+          # Gmeek owns its generated README. Restore the repository copy so a
+          # custom README is never overwritten by a blog deployment.
+          git restore --source=HEAD -- README.md
+
+      - name: Commit generated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth 1 origin main
+          if [ "$(git rev-parse origin/main)" != "$BASE_SHA" ]; then
+            echo "main changed while this build was running. Run the workflow again."
+            exit 1
+          fi
+
+          git config --local user.email "$(jq -r '.email' config.json)"
+          git config --local user.name "$GITHUB_REPOSITORY_OWNER"
           git add -A
           if git diff --cached --quiet; then
             echo "nothing to commit"
           else
-            git commit -m '🎉 auto update by Gmeek action'
+            git commit -m 'Publish blog with Gmeek'
             git push origin HEAD:main
           fi
-          
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+
+      - name: Verify deployment source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth 1 origin main
+          if [ "$(git rev-parse origin/main)" != "$(git rev-parse HEAD)" ]; then
+            echo "main changed before deployment. Run the workflow again."
+            exit 1
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: 'docs/.'
-          
+          path: docs
+
   deploy:
     name: Deploy blog
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     needs: build
     permissions:
-      contents: write
+      contents: read
       pages: write
       id-token: write
+    concurrency:
+      group: pages
+      queue: max
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

@@ -1,6 +1,7 @@
-# qbyang 的个人博客 :link: https://younglingi2003.github.io 
-### :page_facing_up: [7](https://younglingi2003.github.io/tag.html) 
-### :speech_balloon: 0 
-### :hibiscus: 50049 
-### :alarm_clock: 2026-07-15 17:29:15 
-### Powered by :heart: [Gmeek](https://github.com/Meekdai/Gmeek)
+# qbyang 的个人博客
+
+分享论文报告，记录 Agent、LLM、强化学习与论文阅读。
+
+博客地址：<https://younglingi2003.github.io>
+
+文章通过 GitHub Issues 编写，并使用 Gmeek 和 GitHub Actions 手动发布。
