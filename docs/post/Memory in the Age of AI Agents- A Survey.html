@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark-blue" data-light-theme="dark" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    <link rel='stylesheet' href='https://younglingi2003.github.io/minimal-dark.css?v=20260714c'>
+    <link rel="icon" href="https://github.com/younglingi2003.png">
+<meta name="description" content="# 《Memory in the Age of AI Agents: A Survey》论文解读
+
+> **论文信息**
+>
+> * 论文：*Memory in the Age of AI Agents*
+> * arXiv：2512.13564
+> * 初版：2025 年 12 月 15 日
+> * 当前版本：v2，2026 年 1 月 13 日
+> * 类型：Agent Memory 综述，目前为 arXiv 预印本
+>
+> 论文试图解决 Agent Memory 领域概念混乱、分类标准不统一、评测协议割裂的问题，并提出 **Forms–Functions–Dynamics（形式—功能—动态）** 三维分类框架。">
+<meta property="og:title" content="Memory in the Age of AI Agents: A Survey">
+<meta property="og:description" content="# 《Memory in the Age of AI Agents: A Survey》论文解读
+
+> **论文信息**
+>
+> * 论文：*Memory in the Age of AI Agents*
+> * arXiv：2512.13564
+> * 初版：2025 年 12 月 15 日
+> * 当前版本：v2，2026 年 1 月 13 日
+> * 类型：Agent Memory 综述，目前为 arXiv 预印本
+>
+> 论文试图解决 Agent Memory 领域概念混乱、分类标准不统一、评测协议割裂的问题，并提出 **Forms–Functions–Dynamics（形式—功能—动态）** 三维分类框架。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://younglingi2003.github.io/post/Memory%20in%20the%20Age%20of%20AI%20Agents-%20A%20Survey.html">
+<meta property="og:image" content="https://github.com/younglingi2003.png">
+<title>Memory in the Age of AI Agents: A Survey</title>
+
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">Memory in the Age of AI Agents: A Survey</h1>
+<div class="title-right">
+    <a href="https://younglingi2003.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/younglingi2003/younglingi2003.github.io/issues/8" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题"style="display:none;">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><h1>《Memory in the Age of AI Agents: A Survey》论文解读</h1>
+<blockquote>
+<p><strong>论文信息</strong></p>
+<ul>
+<li>论文：<em>Memory in the Age of AI Agents</em></li>
+<li>arXiv：2512.13564</li>
+<li>初版：2025 年 12 月 15 日</li>
+<li>当前版本：v2，2026 年 1 月 13 日</li>
+<li>类型：Agent Memory 综述，目前为 arXiv 预印本</li>
+</ul>
+<p>论文试图解决 Agent Memory 领域概念混乱、分类标准不统一、评测协议割裂的问题，并提出 <strong>Forms–Functions–Dynamics（形式—功能—动态）</strong> 三维分类框架。 (<a href="https://arxiv.org/abs/2512.13564" title="[2512.13564] Memory in the Age of AI Agents" rel="nofollow">arXiv</a>)</p>
+</blockquote>
+<h1>Step 1：详细、通俗地讲解论文</h1>
+<h2>1. 论文解决什么问题？</h2>
+<p>现在很多 Agent 论文都声称自己使用了“记忆”，但它们说的可能完全不是同一件事：</p>
+<ul>
+<li>有的把历史对话放进向量数据库；</li>
+<li>有的把成功经验总结成文字；</li>
+<li>有的保存完整任务轨迹；</li>
+<li>有的微调模型，让知识进入参数；</li>
+<li>有的复用 KV Cache 或隐藏状态；</li>
+<li>有的只是不断压缩当前上下文。</li>
+</ul>
+<p>这些方法都被叫作“Memory”，但其存储位置、用途、更新方式和评测标准相差很大。</p>
+<p>作者认为，应该问三个问题：</p>
+<ol>
+<li><strong>记忆以什么形式存在？</strong></li>
+<li><strong>记忆用来做什么？</strong></li>
+<li><strong>记忆如何产生、检索和变化？</strong></li>
+</ol>
+<p>这就是论文最核心的 <strong>Forms–Functions–Dynamics</strong> 框架。 (<a href="https://arxiv.org/abs/2512.13564" title="[2512.13564] Memory in the Age of AI Agents" rel="nofollow">arXiv</a>)</p>
+<h2>2. 如何定义 Agent Memory？</h2>
+<p>论文把 Agent 看成一个不断与环境交互的系统。在时间步 $t$，Agent 根据：</p>
+<ul>
+<li>当前观察 $o_t$；</li>
+<li>当前任务 $Q$；</li>
+<li>从记忆中取出的信息 $m_t$；</li>
+</ul>
+<p>决定下一步动作：</p>
+<p>$$
+a_t=\pi(o_t,m_t,Q)
+$$</p>
+<p>记忆本身不是一个固定数据库，而是一个随时间变化的状态 $M_t$。</p>
+<p>论文将记忆生命周期概括为三个操作：记忆形成、记忆演化、记忆检索</p>
+<h3>2.1 Memory Formation：记忆形成</h3>
+<p>$$
+M_{\text{form}}^{t+1}=F(M_t,\phi_t)
+$$</p>
+<p>即：从当前对话、环境观察、工具调用结果或任务轨迹中，提取值得保存的信息。</p>
+<h3>2.2 Memory Evolution：记忆演化</h3>
+<p>$$
+M_{t+1}=E(M_{\text{form}}^{t+1})
+$$</p>
+<p>新信息不能无脑追加到数据库中，还需要：</p>
+<ul>
+<li>合并重复内容；</li>
+<li>处理新旧记忆冲突；</li>
+<li>删除过时信息；</li>
+<li>将具体案例抽象成一般规律；</li>
+<li>调整记忆结构；</li>
+<li>降低低价值记忆的优先级。</li>
+</ul>
+<p>一个好的记忆系统不应把信息当作绝对真理，而应更新版本、记录时间和适用范围。</p>
+<h3>2.3 Memory Retrieval：记忆检索</h3>
+<p>$$
+m_t=R(M_t,o_t,Q)
+$$</p>
+<p>检索不是简单地做一次向量相似度搜索，而是包括：</p>
+<ul>
+<li>根据当前任务构造查询；</li>
+<li>选择应该搜索哪类记忆；</li>
+<li>使用语义检索、关键词搜索或图遍历；</li>
+<li>过滤无关或冲突记忆；</li>
+<li>将记忆整理成适合 LLM 使用的上下文。</li>
+</ul>
+<p>因此，Agent Memory 更像一个不断运行的操作系统，而不是一个只会读写的硬盘。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h2>3. Agent Memory 与相邻概念有什么区别？</h2>
+<h3>3.1 Agent Memory 与 RAG</h3>
+<p>传统 RAG 通常是：</p>
+<blockquote>
+<p>用户提出问题 → 从外部知识库搜索文档 → 生成答案。</p>
+</blockquote>
+<p>知识库往往是预先构建的、相对静态的，主要目的是补充外部知识。</p>
+<p>Agent Memory 更强调：</p>
+<blockquote>
+<p>Agent 在连续交互中自己积累、修改和使用内部经验。</p>
+</blockquote>
+<p>当然，现在的 Agentic RAG 会自动决定何时搜索、搜索什么，因此二者边界正在变得模糊。 (<a href="https://arxiv.org/abs/2512.13564" title="[2512.13564] Memory in the Age of AI Agents" rel="nofollow">arXiv</a>)</p>
+<h3>3.2 Agent Memory 与 Context Engineering</h3>
+<p>Context Engineering 关注：</p>
+<blockquote>
+<p>在有限上下文窗口中，应该放入哪些内容，如何排序和压缩？</p>
+</blockquote>
+<p>它主要解决当前推理的上下文组织问题。</p>
+<p>Agent Memory 的范围更大，还包括：</p>
+<ul>
+<li>跨任务持久化；</li>
+<li>用户身份与偏好维护；</li>
+<li>经验积累；</li>
+<li>技能学习；</li>
+<li>遗忘和记忆更新；</li>
+<li>多 Agent 共享。</li>
+</ul>
+<p>因此可以把 Context Engineering 看作 Agent 工作记忆的一种实现手段，而不能把它等同于完整的 Agent Memory。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h3>3.3 Agent Memory 与 LLM Memory</h3>
+<p>论文主要把纯模型内部的以下机制与 Agent Memory 区分开来：</p>
+<ul>
+<li>KV Cache 管理；</li>
+<li>长上下文建模；</li>
+<li>Transformer 架构修改；</li>
+<li>不具有持续演化机制的内部状态。</li>
+</ul>
+<p>关键区别在于：Agent Memory 通常服务于一个持续行动的 Agent，并且会随着交互和任务经验不断变化。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h2>4. Forms——记忆以什么形式存在？</h2>
+<h3>4.1 Token-level Memory：Token 级记忆</h3>
+<p>这是目前最常见、最容易工程实现的形式。</p>
+<p>记忆被保存为显式、可读、可修改的对象，例如：</p>
+<ul>
+<li>文本；</li>
+<li>JSON；</li>
+<li>对话摘要；</li>
+<li>用户画像；</li>
+<li>任务轨迹；</li>
+<li>知识图谱；</li>
+<li>代码和技能；</li>
+<li>图像或多模态 Token。</li>
+</ul>
+<p>它最大的优点是：</p>
+<ul>
+<li>可解释；</li>
+<li>可人工检查；</li>
+<li>容易增删改；</li>
+<li>可以追踪记忆来源；</li>
+<li>不需要修改基础模型。</li>
+</ul>
+<p>缺点则是：</p>
+<ul>
+<li>记忆不断增长；</li>
+<li>检索成本逐渐增加；</li>
+<li>可能检索到相似但无用的内容；</li>
+<li>大量记忆进入上下文会带来 Token 成本；</li>
+<li>记忆质量高度依赖提取和检索模块。</li>
+</ul>
+<p>论文进一步按照结构将其划分为三类。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h4>4.1.1 Flat Memory：平面记忆</h4>
+<p>每条记忆相对独立，例如向量数据库中的若干文本块：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">Memory 1：用户喜欢 Python。
+Memory 2：上次安装 CUDA 时驱动版本不匹配。
+Memory 3：这个项目使用 Conda 环境。
+</code></pre>
+<p>优点是简单、便于追加；缺点是随着记忆增多，很难表达复杂关系。</p>
+<h4>4.1.2 Planar Memory：结构化记忆</h4>
+<p>使用一层结构连接记忆，例如：</p>
+<ul>
+<li>图；</li>
+<li>树；</li>
+<li>表格；</li>
+<li>时间线；</li>
+<li>单层知识图谱。</li>
+</ul>
+<p>例如：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">用户
+ ├── 偏好：Python
+ ├── 设备：ThinkStation
+ └── 项目：Agent Memory
+       ├── 使用模型：Qwen
+       └── 当前问题：检索失败
+</code></pre>
+<p>它比单纯向量库更适合关系推理，但构建和维护成本更高。</p>
+<h4>4.1.3 Hierarchical Memory：层次化记忆</h4>
+<p>记忆被分为多个抽象层级：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">原始轨迹
+   ↓
+任务摘要
+   ↓
+通用策略
+   ↓
+长期技能
+</code></pre>
+<p>例如，Agent 多次执行代码任务后：</p>
+<ul>
+<li>底层保存完整操作轨迹；</li>
+<li>中层保存每个任务的错误总结；</li>
+<li>高层提炼出“部署前检查清单”。</li>
+</ul>
+<p>这种结构更适合长期学习，但也最复杂：系统必须决定什么时候总结、总结到哪一层，以及如何避免抽象过程损失关键信息。</p>
+<h3>4.2 Parametric Memory：参数记忆</h3>
+<p>参数记忆是把知识或经验写入模型权重中。</p>
+<h4>内部参数记忆</h4>
+<p>直接更新基础模型，例如：</p>
+<ul>
+<li>持续预训练；</li>
+<li>SFT；</li>
+<li>强化学习；</li>
+<li>在线微调。</li>
+</ul>
+<p>优点是推理时不一定需要额外检索；缺点是：</p>
+<ul>
+<li>更新代价大；</li>
+<li>难以解释；</li>
+<li>很难删除某一条具体记忆；</li>
+<li>可能发生灾难性遗忘；</li>
+<li>高频更新不现实。</li>
+</ul>
+<h4>外部参数记忆</h4>
+<p>不修改主模型，而使用：</p>
+<ul>
+<li>LoRA；</li>
+<li>Adapter；</li>
+<li>小型辅助模型；</li>
+<li>专门的记忆编码器。</li>
+</ul>
+<p>例如可以给不同用户加载不同 LoRA，使个性化知识保存在独立模块中。</p>
+<p>这种方法比修改整个模型更灵活，但仍然存在难以审计和精确删除的问题。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h3>4.3 Latent Memory：潜在表示记忆</h3>
+<p>这类记忆不是可读文本，而是：</p>
+<ul>
+<li>Hidden State；</li>
+<li>KV Cache；</li>
+<li>连续向量；</li>
+<li>Memory Token；</li>
+<li>压缩后的潜在表示。</li>
+</ul>
+<p>论文将其概括为三种处理方式。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h4>Generate：生成新的潜在记忆</h4>
+<p>让一个编码器把长文本压缩成少量连续向量或特殊 Token。</p>
+<p>优点是紧凑、节约上下文；缺点是压缩后不知道具体丢失了什么。</p>
+<h4>Reuse：复用已有状态</h4>
+<p>直接保存和复用过去的 KV Cache 或隐藏状态。</p>
+<p>这样能保留较完整的内部计算结果，但缓存会快速增长，而且不同上下文之间未必能够直接兼容。</p>
+<h4>Transform：转换已有状态</h4>
+<p>对潜在状态进行：</p>
+<ul>
+<li>剪枝；</li>
+<li>聚合；</li>
+<li>重编码；</li>
+<li>选择重要 Token；</li>
+<li>压缩 KV Cache。</li>
+</ul>
+<p>本质是在信息完整性和计算效率之间寻找平衡。</p>
+<h3>我的看法</h3>
+<p>论文把“记忆到底存在哪里”说清楚了。</p>
+<p>最实用的区别是：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>形式</th>
+<th align="right">可读性</th>
+<th align="right">更新方便程度</th>
+<th align="right">推理成本</th>
+<th>主要风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token-level</td>
+<td align="right">高</td>
+<td align="right">高</td>
+<td align="right">检索和上下文成本较高</td>
+<td>噪声、检索错误</td>
+</tr>
+<tr>
+<td>Parametric</td>
+<td align="right">低</td>
+<td align="right">低</td>
+<td align="right">使用时较自然</td>
+<td>遗忘、不可精确删除</td>
+</tr>
+<tr>
+<td>Latent</td>
+<td align="right">很低</td>
+<td align="right">中低</td>
+<td align="right">可能更高效</td>
+<td>信息损失、难以审计</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<p>未来真正强大的 Agent 很可能不是只使用一种，而是采用混合结构：</p>
+<ul>
+<li>Token 记忆负责可审计事实；</li>
+<li>参数记忆负责稳定技能；</li>
+<li>Latent 记忆负责高效率工作状态。</li>
+</ul>
+<h2>5. Functions——Agent 为什么需要记忆？</h2>
+<h3>5.1 Factual Memory：事实记忆</h3>
+<p>事实记忆回答：</p>
+<blockquote>
+<p>过去发生过什么？世界和用户是什么样的？</p>
+</blockquote>
+<p>它又可以包含：</p>
+<ul>
+<li><strong>情景记忆</strong>：某次具体事件；</li>
+<li><strong>语义记忆</strong>：从多个事件中形成的一般事实。</li>
+</ul>
+<p>事实记忆主要保证 Agent 的一致性、个性化和跨会话连续性。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h3>5.2 Experiential Memory：经验记忆</h3>
+<p>经验记忆回答：</p>
+<blockquote>
+<p>过去是怎么做的？什么方法有效？什么方法会失败？</p>
+</blockquote>
+<p>论文将其进一步分成三类。</p>
+<h4>Case-based Memory：案例记忆</h4>
+<p>保存具体成功或失败案例，遇到相似任务时，可以直接复用整个案例。</p>
+<h4>Strategy-based Memory：策略记忆</h4>
+<p>不是保存完整轨迹，而是提炼策略。</p>
+<p>这比具体案例更容易迁移到新任务。</p>
+<h4>Skill-based Memory：技能记忆</h4>
+<p>将经验进一步编译成可执行技能，例如：</p>
+<ul>
+<li>Python 函数；</li>
+<li>Shell 脚本；</li>
+<li>工具调用流程；</li>
+<li>工作流模板；</li>
+<li>API 使用方法。</li>
+</ul>
+<p>此时 Agent 不只是“记得过去”，而是把经验转化成新的行动能力。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h3>5.3 Working Memory：工作记忆</h3>
+<p>工作记忆类似 Agent 当前使用的“草稿纸”，用于保存：</p>
+<ul>
+<li>当前目标；</li>
+<li>已完成步骤；</li>
+<li>中间推理结果；</li>
+<li>待验证假设；</li>
+<li>当前计划；</li>
+<li>工具返回结果；</li>
+<li>尚未解决的子问题。</li>
+</ul>
+<p>它的核心不是永久保存，而是在当前任务中保持目标和状态一致。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<hr>
+<h3>我的看法</h3>
+<p>这是整篇论文里我认为最重要的分类。</p>
+<p>很多系统所谓“增加记忆”，实际上只增加了事实记忆：</p>
+<blockquote>
+<p>给 Agent 接一个向量数据库，让它能记住用户说过的话。</p>
+</blockquote>
+<p>但 Agent 仍然会反复犯相同的操作错误，因为它没有：</p>
+<ul>
+<li>经验记忆：总结过去为什么失败；</li>
+<li>策略记忆：形成解决问题的原则；</li>
+<li>技能记忆：把成功方法编译成工具。</li>
+</ul>
+<p>所以，<strong>记住事实不等于学会做事</strong>。</p>
+<p>真正的自进化 Agent，关键并不是记住更多历史，而是把历史转换成可复用的策略和技能。</p>
+<h2>6. Dynamics——记忆如何运行？</h2>
+<h3>6.1 Formation：记忆形成</h3>
+<p>形成阶段决定“写什么”。</p>
+<p>可能包括：</p>
+<ul>
+<li><strong>Perception</strong>：把原始观察编码为可处理表示；</li>
+<li><strong>Extraction</strong>：提取实体、关系、偏好和关键事件；</li>
+<li><strong>Summarization</strong>：压缩长内容；</li>
+<li><strong>Abstraction</strong>：从案例中提炼一般规律；</li>
+<li><strong>Reflection</strong>：对执行过程进行反思。</li>
+</ul>
+<p>最困难的问题是：</p>
+<blockquote>
+<p>什么信息值得保存？</p>
+</blockquote>
+<p>如果全部保存，记忆会爆炸；如果只保存摘要，可能丢掉关键细节。</p>
+<h3>6.2 Retrieval：记忆检索</h3>
+<p>检索阶段决定“读什么”。</p>
+<p>通常包括：</p>
+<ol>
+<li>为记忆建立索引；</li>
+<li>根据任务构造查询；</li>
+<li>执行语义搜索、关键词搜索或图遍历；</li>
+<li>对候选结果重排；</li>
+<li>过滤冲突和低可信记忆；</li>
+<li>将检索结果整合进上下文。</li>
+</ol>
+<p>这里有一个经常被忽视的问题：</p>
+<blockquote>
+<p>检索内容与当前问题相似，不代表它对决策真正有用。</p>
+</blockquote>
+<p>例如当前问题是“模型为什么输出 NaN”，向量检索可能找到大量包含“NaN”一词的记录，却未必找到真正相关的“学习率过大”经验。</p>
+<p>因此，未来的记忆检索应该优化<strong>决策价值</strong>，而不只是文本相似度。</p>
+<h3>6.3 Evolution：记忆演化</h3>
+<p>演化阶段决定“如何修改已有记忆”。</p>
+<p>包括：</p>
+<ul>
+<li>Consolidation：合并和巩固；</li>
+<li>Updating：更新事实；</li>
+<li>Reorganization：调整结构；</li>
+<li>Pruning/Forgetting：删除低价值内容；</li>
+<li>Generalization：提炼通用知识；</li>
+<li>Distillation：将大量案例压缩成策略或技能。</li>
+</ul>
+<p>论文的重要观点是：</p>
+<blockquote>
+<p>遗忘不是记忆系统的缺陷，而是记忆系统必须具备的能力。</p>
+</blockquote>
+<p>没有遗忘机制的 Agent 最终会被过时、矛盾和低质量信息淹没。 (<a href="https://www.themoonlight.io/en/review/memory-in-the-age-of-ai-agents" title="[Literature Review] Memory in the Age of AI Agents" rel="nofollow">Moonlight</a>)</p>
+<h2>7. 用一个完整例子理解三维框架</h2>
+<p>假设有一个编程 Agent，连续帮助用户部署模型。</p>
+<p>第一次部署失败：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">CUDA available: False
+</code></pre>
+<p>Agent 可以形成以下记忆：</p>
+<h3>Forms</h3>
+<ul>
+<li>Token-level：保存错误日志和解决方案；</li>
+<li>Parametric：通过后续训练学会 CUDA 排查流程；</li>
+<li>Latent：压缩当前任务中的大量终端输出。</li>
+</ul>
+<h3>Functions</h3>
+<ul>
+<li>Factual：用户使用 Ubuntu，GPU 驱动曾经损坏；</li>
+<li>Experiential：先检查 <code class="notranslate">nvidia-smi</code>，再检查 PyTorch CUDA 版本；</li>
+<li>Working：当前已修复驱动，下一步检查模型依赖。</li>
+</ul>
+<h3>Dynamics</h3>
+<ul>
+<li>Formation：从终端日志中提取失败原因；</li>
+<li>Retrieval：下次出现 CUDA 问题时找回该经验；</li>
+<li>Evolution：发现旧解决方法不适用于新驱动后，更新原有记忆。</li>
+</ul>
+<p>这说明，一套完整 Agent Memory 不是一个向量数据库，而是一套包含<strong>存储、提炼、搜索、更新和遗忘</strong>的认知基础设施。</p>
+<h1>Step 2：实验部分</h1>
+<h2>1. 没有传统意义上的实验</h2>
+<p>这是一篇综述，而不是提出新模型的算法论文。</p>
+<p>论文对应的“实验部分”，实际上是对以下内容的整理：</p>
+<ol>
+<li>Agent Memory 基准；</li>
+<li>常用评测指标；</li>
+<li>开源 Memory 框架；</li>
+<li>不同工作之间评测协议不统一的问题。</li>
+</ol>
+<p>作者本人也明确把“汇总基准与开源框架”作为论文贡献之一。 (<a href="https://arxiv.org/abs/2512.13564" title="[2512.13564] Memory in the Age of AI Agents" rel="nofollow">arXiv</a>)</p>
+<h2>2. 事实记忆如何评测？</h2>
+<p>事实记忆通常使用长对话或多会话问答基准，例如综述讨论范围中的 LoCoMo、LongMemEval 等。</p>
+<p>常见测试形式是：</p>
+<blockquote>
+<p>在很早以前的对话中埋入一条信息，经过大量无关对话后，再询问 Agent。</p>
+</blockquote>
+<p>例如：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">第 1 轮：我的狗叫 Coco。
+……
+第 300 轮：我的狗叫什么？
+</code></pre>
+<p>更困难的题目还会要求：</p>
+<ul>
+<li>跨多个对话片段组合信息；</li>
+<li>理解事件的先后顺序；</li>
+<li>识别用户偏好的变化；</li>
+<li>区分旧事实和新事实；</li>
+<li>在大量干扰信息中找出关键记忆。</li>
+</ul>
+<p>这类基准主要检验事实与情景记忆，但并不能充分说明 Agent 是否真正从过去的经验中学会了新的策略。 (<a href="https://github.com/lhl/agentic-memory/blob/main/ANALYSIS-arxiv-2512.13564-memory-age-ai-agents.md" title="agentic-memory/ANALYSIS-arxiv-2512.13564-memory-age-ai-agents.md at main · lhl/agentic-memory · GitHub">GitHub</a>)</p>
+<h2>3. 经验记忆如何评测？</h2>
+<p>经验记忆应该关注：</p>
+<blockquote>
+<p>使用过去经验后，未来任务是否做得更好？</p>
+</blockquote>
+<p>例如，Agent 第一次完成网页任务时失败，将失败原因写入记忆；第二次遇到类似网站时，观察：</p>
+<ul>
+<li>成功率是否提高；</li>
+<li>工具调用次数是否减少；</li>
+<li>是否避免重复错误；</li>
+<li>是否能迁移到稍有不同的任务；</li>
+<li>记忆是否产生负迁移。</li>
+</ul>
+<p>但现有不少工作只展示“加入经验库后平均分提高”，没有真正区分提升来自：</p>
+<ul>
+<li>更多上下文；</li>
+<li>更好的提示词；</li>
+<li>基础模型本身变强；</li>
+<li>记忆机制确实学到了可迁移经验。</li>
+</ul>
+<h2>4. 工作记忆如何评测？</h2>
+<p>工作记忆通常关注长任务中：</p>
+<ul>
+<li>Agent 能否保持当前目标；</li>
+<li>是否遗漏已完成步骤；</li>
+<li>是否重复执行动作；</li>
+<li>上下文压缩后是否保留关键信息；</li>
+<li>使用多少 Token；</li>
+<li>推理延迟和成本是否下降；</li>
+<li>最终任务成功率是否受影响。</li>
+</ul>
+<p>一个好的工作记忆系统不能只追求“压缩率”。</p>
+<p>例如，把 100,000 Token 压成 1,000 Token 看起来非常高效，但如果恰好删除了任务约束，Agent 最终失败，那么这种压缩没有实际价值。</p>
+<p>因此应联合衡量：</p>
+<p>$$
+\text{任务成功率}+\text{Token 成本}+\text{延迟}+\text{信息保真度}
+$$</p>
+<h2>5. 开源框架整理</h2>
+<p>论文及其配套列表整理了大量代表性系统，例如：</p>
+<ul>
+<li>MemGPT；</li>
+<li>Mem0；</li>
+<li>Zep；</li>
+<li>A-MEM；</li>
+<li>MemoryBank；</li>
+<li>HippoRAG；</li>
+<li>不同类型的图记忆、层次记忆和经验记忆系统。 (<a href="https://github.com/Shichun-Liu/Agent-Memory-Paper-List" title="GitHub - Shichun-Liu/Agent-Memory-Paper-List: The paper list of &quot;Memory in the Age of AI Agents: A Survey&quot; · GitHub">GitHub</a>)</li>
+</ul>
+<p>这对工程人员很有用，可以根据三维框架选择系统：</p>
+<markdown-accessiblity-table><table role="table">
+<thead>
+<tr>
+<th>需求</th>
+<th>更关注的记忆能力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>记住用户偏好</td>
+<td>Factual + Token-level</td>
+</tr>
+<tr>
+<td>长期对话一致性</td>
+<td>Factual + Hierarchical</td>
+</tr>
+<tr>
+<td>避免重复犯错</td>
+<td>Experiential + Strategy</td>
+</tr>
+<tr>
+<td>自动积累工具能力</td>
+<td>Experiential + Skill</td>
+</tr>
+<tr>
+<td>控制长上下文成本</td>
+<td>Working + Latent</td>
+</tr>
+<tr>
+<td>保存可审计企业信息</td>
+<td>Token-level + Provenance</td>
+</tr>
+</tbody>
+</table></markdown-accessiblity-table>
+<h1>Step 3：简要汇报</h1>
+<p>这篇综述系统梳理了 AI Agent 的记忆研究，指出传统的长短期记忆分类已经不足，并提出形式、功能和动态三个分析维度。形式包括 Token、参数和潜在表示记忆；功能包括事实、经验和工作记忆；动态则涵盖记忆形成、检索、更新与遗忘。论文的核心价值是把记忆从简单数据库提升为 Agent 的基础认知能力，但目前分类边界仍有重叠，也缺少统一实验验证。未来值得研究的方向包括可学习的记忆管理、不同记忆形式的一致性，以及多 Agent 共享记忆的安全与可信问题。</p>
+<p>该段概括基于论文的三维分类、评测资源和未来研究方向。 (<a href="https://arxiv.org/abs/2512.13564" title="[2512.13564] Memory in the Age of AI Agents" rel="nofollow">arXiv</a>)</p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://younglingi2003.github.io">qbyang 的个人博客</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行 "+diffDay+" 天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.disabled=true;
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","younglingi2003/younglingi2003.github.io");
+    script.setAttribute("issue-term","title");
+    
+    script.setAttribute("theme","dark-blue");
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+
+
+</script>
+<script src='https://younglingi2003.github.io/collapsible-toc.js'></script><script>MathJax = {tex: {inlineMath: [["$", "$"]]}};</script><script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</html>
