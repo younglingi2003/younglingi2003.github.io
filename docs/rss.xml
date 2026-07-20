@@ -1,5 +1,15 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>qbyang 的个人博客</title><link>https://younglingi2003.github.io</link><description>记录 Agent、LLM、强化学习与论文阅读</description><copyright>qbyang 的个人博客</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.com/younglingi2003.png</url><title>avatar</title><link>https://younglingi2003.github.io</link></image><lastBuildDate>Thu, 16 Jul 2026 05:21:07 +0000</lastBuildDate><managingEditor>qbyang 的个人博客</managingEditor><ttl>60</ttl><webMaster>qbyang 的个人博客</webMaster><item><title>LLM多智能体通信：从“多个Agent聊天”走向“构建真正协作的智能体系统”</title><link>https://younglingi2003.github.io/post/LLM-duo-zhi-neng-ti-tong-xin-%EF%BC%9A-cong-%E2%80%9C-duo-ge-Agent-liao-tian-%E2%80%9D-zou-xiang-%E2%80%9C-gou-jian-zhen-zheng-xie-zuo-de-zhi-neng-ti-xi-tong-%E2%80%9D.html</link><description># 前言
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>qbyang 的个人博客</title><link>https://younglingi2003.github.io</link><description>记录 Agent、LLM、强化学习与论文阅读</description><copyright>qbyang 的个人博客</copyright><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://github.com/younglingi2003.png</url><title>avatar</title><link>https://younglingi2003.github.io</link></image><lastBuildDate>Mon, 20 Jul 2026 08:23:10 +0000</lastBuildDate><managingEditor>qbyang 的个人博客</managingEditor><ttl>60</ttl><webMaster>qbyang 的个人博客</webMaster><item><title>从数据到生命模拟：AI 如何用统一表征与虚拟实验构建虚拟细胞</title><link>https://younglingi2003.github.io/post/cong-shu-ju-dao-sheng-ming-mo-ni-%EF%BC%9AAI%20-ru-he-yong-tong-yi-biao-zheng-yu-xu-ni-shi-yan-gou-jian-xu-ni-xi-bao.html</link><description># 前言
+
+标题：[How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities](https://arxiv.org/abs/2409.11654)
+
+正式发表：*Cell* 187(25), 7045–7063，2024 年 12 月；[DOI: 10.1016/j.cell.2024.11.015](https://doi.org/10.1016/j.cell.2024.11.015)。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/cong-shu-ju-dao-sheng-ming-mo-ni-%EF%BC%9AAI%20-ru-he-yong-tong-yi-biao-zheng-yu-xu-ni-shi-yan-gou-jian-xu-ni-xi-bao.html</guid><pubDate>Mon, 20 Jul 2026 08:22:15 +0000</pubDate></item><item><title>DiscoBench：让搜索智能体学会“该搜时搜、该问时问”</title><link>https://younglingi2003.github.io/post/DiscoBench%EF%BC%9A-rang-sou-suo-zhi-neng-ti-xue-hui-%E2%80%9C-gai-sou-shi-sou-%E3%80%81-gai-wen-shi-wen-%E2%80%9D.html</link><description># 前言
+
+**标题：** [When Search Agents Should Ask: DiscoBench for Clarification-Aware Deep Search](https://arxiv.org/abs/2606.27669)
+
+**标签：** 深度搜索；澄清式交互；查询歧义；智能体评测
+
+**摘要：** 这篇论文最核心的思想是：**搜索智能体真正缺少的往往不是“继续搜索的能力”，而是判断“现在已经搜不明白，应该停下来问用户”的能力。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/DiscoBench%EF%BC%9A-rang-sou-suo-zhi-neng-ti-xue-hui-%E2%80%9C-gai-sou-shi-sou-%E3%80%81-gai-wen-shi-wen-%E2%80%9D.html</guid><pubDate>Fri, 17 Jul 2026 04:57:00 +0000</pubDate></item><item><title>LLM多智能体通信：从“多个Agent聊天”走向“构建真正协作的智能体系统”</title><link>https://younglingi2003.github.io/post/LLM-duo-zhi-neng-ti-tong-xin-%EF%BC%9A-cong-%E2%80%9C-duo-ge-Agent-liao-tian-%E2%80%9D-zou-xiang-%E2%80%9C-gou-jian-zhen-zheng-xie-zuo-de-zhi-neng-ti-xi-tong-%E2%80%9D.html</link><description># 前言
 
 **标题：** [Beyond Self-Talk: A Communication-Centric Survey of LLM-Based Multi-Agent Systems](https://arxiv.org/abs/2502.14321)
 
@@ -18,17 +28,7 @@
 
 **题目：** *Agentic Reasoning for Large Language Models*
 **类型：** 大型综述论文
-**核心主题：** 如何把 LLM 从“静态回答问题的模型”，升级为能够规划、行动、记忆、学习和协作的智能体。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/Agentic%20Reasoning%20for%20Large%20Language%20Models.html</guid><pubDate>Wed, 15 Jul 2026 11:49:04 +0000</pubDate></item><item><title>Memory in the Age of AI Agents: A Survey</title><link>https://younglingi2003.github.io/post/Memory%20in%20the%20Age%20of%20AI%20Agents-%20A%20Survey.html</link><description># 《Memory in the Age of AI Agents: A Survey》论文解读
-
-&gt; **论文信息**
-&gt;
-&gt; * 论文：*Memory in the Age of AI Agents*
-&gt; * arXiv：2512.13564
-&gt; * 初版：2025 年 12 月 15 日
-&gt; * 当前版本：v2，2026 年 1 月 13 日
-&gt; * 类型：Agent Memory 综述，目前为 arXiv 预印本
-&gt;
-&gt; 论文试图解决 Agent Memory 领域概念混乱、分类标准不统一、评测协议割裂的问题，并提出 **Forms–Functions–Dynamics（形式—功能—动态）** 三维分类框架。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/Memory%20in%20the%20Age%20of%20AI%20Agents-%20A%20Survey.html</guid><pubDate>Wed, 15 Jul 2026 06:49:15 +0000</pubDate></item><item><title>关于 Who&amp;When 的想法</title><link>https://younglingi2003.github.io/post/guan-yu-%20Who%26When%20-de-xiang-fa.html</link><description>猜测：多数决定性错误会直接影响接下来的步骤，多数普通错误会在接下来的步骤被修复/被验证无关紧要。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/guan-yu-%20Who%26When%20-de-xiang-fa.html</guid><pubDate>Wed, 15 Jul 2026 04:41:37 +0000</pubDate></item><item><title>Who&amp;When：Which Agent Causes Task Failures and When?</title><link>https://younglingi2003.github.io/post/Who%26When%EF%BC%9AWhich%20Agent%20Causes%20Task%20Failures%20and%20When-.html</link><description># 论文解读：Which Agent Causes Task Failures and When?
+**核心主题：** 如何把 LLM 从“静态回答问题的模型”，升级为能够规划、行动、记忆、学习和协作的智能体。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/Agentic%20Reasoning%20for%20Large%20Language%20Models.html</guid><pubDate>Wed, 15 Jul 2026 11:49:04 +0000</pubDate></item><item><title>关于 Who&amp;When 的想法</title><link>https://younglingi2003.github.io/post/guan-yu-%20Who%26When%20-de-xiang-fa.html</link><description>猜测：多数决定性错误会直接影响接下来的步骤，多数普通错误会在接下来的步骤被修复/被验证无关紧要。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/guan-yu-%20Who%26When%20-de-xiang-fa.html</guid><pubDate>Wed, 15 Jul 2026 04:41:37 +0000</pubDate></item><item><title>Who&amp;When：Which Agent Causes Task Failures and When?</title><link>https://younglingi2003.github.io/post/Who%26When%EF%BC%9AWhich%20Agent%20Causes%20Task%20Failures%20and%20When-.html</link><description># 论文解读：Which Agent Causes Task Failures and When?
 
 &gt; **论文发表信息**：ICML 2025，论文集 PMLR 267。</description><guid isPermaLink="true">https://younglingi2003.github.io/post/Who%26When%EF%BC%9AWhich%20Agent%20Causes%20Task%20Failures%20and%20When-.html</guid><pubDate>Wed, 15 Jul 2026 04:26:40 +0000</pubDate></item><item><title>Beyond Individual Intelligence: Surveying Collaboration, Failure Attribution, and Self-Evolution in LLM-based Multi-Agent Systems</title><link>https://younglingi2003.github.io/post/Beyond%20Individual%20Intelligence-%20Surveying%20Collaboration%2C%20Failure%20Attribution%2C%20and%20Self-Evolution%20in%20LLM-based%20Multi-Agent%20Systems.html</link><description># 论文解读：Beyond Individual Intelligence
 
