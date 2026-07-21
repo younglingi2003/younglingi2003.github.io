@@ -253,7 +253,158 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <p><a href="https://doi.org/10.1016/j.cell.2025.06.008" rel="nofollow">Virtual Cell Challenge: Toward a Turing test for the virtual cell</a>（<em>Cell</em>, 2025）：建立开放、周期性的虚拟细胞评测框架，以专门生成的扰动数据、隐藏测试集和多指标评价比较模型。它不是新模型，而是把本文最重要的“共享基准和可验证性”倡议变成了可执行的社区基础设施。</p>
 </li>
 </ul>
-<p>三项工作正好形成一条发展链：scGPT 学习细胞表征，State 预测扰动后的状态转移，Virtual Cell Challenge 检验这些预测是否真的可信。</p></div>
+<p>三项工作正好形成一条发展链：scGPT 学习细胞表征，State 预测扰动后的状态转移，Virtual Cell Challenge 检验这些预测是否真的可信。</p>
+<h2>一句话概括</h2>
+<p>这篇文章是在画一张“路线图”：</p>
+<blockquote>
+<p><strong>未来能不能像做天气预报一样，用 AI 在电脑中模拟细胞，提前预测药物、基因突变或环境变化会让细胞发生什么？</strong></p>
+</blockquote>
+<p>作者把这种系统称为 <strong>AI Virtual Cell，AI 虚拟细胞</strong>。需要注意，这篇文章主要是<strong>观点与规划文章</strong>，不是发布了一个已经完成的虚拟细胞模型。其预印本发表于 2024 年，随后以 Perspective 形式发表于《Cell》。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>1. 什么是“虚拟细胞”？</h2>
+<p>可以把真实细胞想象成一座极其复杂的城市：</p>
+<ul>
+<li>基因相当于城市的设计图；</li>
+<li>蛋白质相当于机器和工作人员；</li>
+<li>不同细胞器相当于工厂、仓库和发电站；</li>
+<li>各种化学信号相当于通信网络。</li>
+</ul>
+<p>虚拟细胞的目标，就是在电脑里建立这座城市的模拟器。</p>
+<p>你可以向它提问：</p>
+<ul>
+<li>关闭某个基因会怎样？</li>
+<li>加入一种药物会怎样？</li>
+<li>健康细胞为什么会变成癌细胞？</li>
+<li>同一种药为什么对不同患者效果不同？</li>
+</ul>
+<p>然后模型预测细胞未来的变化。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>2. 它与普通单细胞 AI 有什么区别？</h2>
+<p>现在很多模型只处理一种数据，例如只看：</p>
+<ul>
+<li>哪些基因正在表达；</li>
+<li>蛋白质有多少；</li>
+<li>细胞长什么样。</li>
+</ul>
+<p>但真正的细胞同时包含很多层次：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">DNA
+ ↓
+RNA
+ ↓
+蛋白质
+ ↓
+细胞结构
+ ↓
+细胞行为
+ ↓
+组织和器官
+</code></pre>
+<p>作者希望未来的虚拟细胞能够把这些不同数据统一起来，同时理解从分子、细胞到组织的多个尺度，而不是只预测一张“基因表达表”。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>3. 理想的虚拟细胞应该有什么能力？</h2>
+<p>可以概括成三层。</p>
+<h3>第一层：认识细胞</h3>
+<p>模型先学习一种通用的“细胞表示”。</p>
+<p>类似 ChatGPT 把一句话转化成内部语义表示，虚拟细胞也要把基因、蛋白质、图像和细胞状态转化成一个统一的数字表示。</p>
+<p>这样，来自不同实验和不同测量技术的数据才能互相联系。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<h3>第二层：预测细胞</h3>
+<p>给定一个初始细胞和某种干预，模型预测之后会发生什么：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">当前细胞
++
+药物、基因编辑或环境变化
+↓
+未来细胞状态
+</code></pre>
+<p>例如预测关闭某个基因后，细胞是否停止生长、死亡或者转变成另一种状态。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<h3>第三层：帮助科学家做虚拟实验</h3>
+<p>文章提出“虚拟仪器”的概念。</p>
+<p>科学家不只是向模型要一个答案，而是可以像使用显微镜和实验设备一样，利用模型：</p>
+<ul>
+<li>比较不同处理条件；</li>
+<li>检查哪些分子最关键；</li>
+<li>生成可验证的假设；</li>
+<li>决定下一步最值得做哪个真实实验。</li>
+</ul>
+<p>因此，理想目标不是一个只会预测的黑箱，而是一个帮助科学家探索和理解生物机制的工具。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>4. 为什么现在可能做到？</h2>
+<p>过去主要靠科学家手工写公式，描述细胞中的各种反应。</p>
+<p>问题是细胞太复杂了，成千上万个分子相互作用，很难把所有规则都写出来。</p>
+<p>现在出现了两个新条件：</p>
+<ol>
+<li>单细胞测序、显微成像和空间组学等技术，产生了大量细胞数据；</li>
+<li>大规模神经网络能够直接从数据中学习复杂规律。</li>
+</ol>
+<p>所以新的思路是：</p>
+<blockquote>
+<p>不再要求科学家提前写出所有生物规律，而是让 AI 从大量实验数据中学习细胞如何运行。</p>
+</blockquote>
+<p>这与大语言模型从大量文本中学习语言规律有一定相似性。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>5. 它未来有什么用？</h2>
+<p>最直接的用途是药物研发。</p>
+<p>传统药物研发往往需要测试大量候选物，而虚拟细胞可以先在电脑里筛选：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">数万个候选药物
+↓
+虚拟细胞预测
+↓
+挑出最有希望的少数药物
+↓
+再做真实实验
+</code></pre>
+<p>它还可能用于：</p>
+<ul>
+<li>寻找新的药物靶点；</li>
+<li>预测基因突变带来的影响；</li>
+<li>研究疾病如何产生；</li>
+<li>预测细胞对治疗的反应；</li>
+<li>扩大科学家一次能够探索的假设数量。</li>
+</ul>
+<p>文章把这些视为虚拟细胞的重要长期应用方向。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>6. 目前最大的困难</h2>
+<p>虚拟细胞离真正成熟还有明显距离。</p>
+<h3>数据不完整</h3>
+<p>我们对细胞的测量通常只是某个时间点、某一种数据，而且不同实验室的数据标准可能不同。</p>
+<h3>缺乏真正的因果数据</h3>
+<p>模型不仅要知道“哪些现象经常一起出现”，还要知道：</p>
+<blockquote>
+<p>改变 A 是否真的导致 B。</p>
+</blockquote>
+<p>这需要大量药物、基因编辑和时间序列实验。</p>
+<h3>很难评价模型是否真的懂了</h3>
+<p>一个模型可能在常规测试集上得分很高，但到了新细胞、新疾病或新药物上就失效。因此需要更严格、与真实生物问题相关的评测。</p>
+<h3>需要能够解释和验证</h3>
+<p>如果模型说某种药有效，科学家还需要知道依据是什么，并通过真实实验验证，不能直接把 AI 输出当成生物学事实。文章因此特别强调数据、评测、开放标准和跨机构协作。([<a href="https://arxiv.org/abs/2409.11654" rel="nofollow">arXiv</a>]<a href="https://arxiv.org/abs/2409.11654" title="[2409.11654] How to Build the Virtual Cell with Artificial Intelligence: Priorities and Opportunities" rel="nofollow">1</a>)</p>
+<hr>
+<h2>7. 用一个最简单的类比理解</h2>
+<p>传统生物实验像是：</p>
+<blockquote>
+<p>真正制造一辆汽车，拆掉一个零件，再观察汽车还能不能开。</p>
+</blockquote>
+<p>虚拟细胞希望做到：</p>
+<blockquote>
+<p>先在高精度汽车模拟器中拆掉零件，预测哪里会出问题，再决定是否值得进行真实测试。</p>
+</blockquote>
+<p>它不能完全替代实验，但可以帮助科学家：</p>
+<ul>
+<li>更快提出假设；</li>
+<li>少做无效实验；</li>
+<li>优先验证最有希望的方向。</li>
+</ul>
+<hr>
+<h2>最核心的结论</h2>
+<p>这篇文章真正提出的不是某一个具体算法，而是一种新的科研基础设施：</p>
+<blockquote>
+<p><strong>建立一个能统一多种生物数据、预测细胞变化，并帮助科学家开展计算机实验的 AI 系统。</strong></p>
+</blockquote>
+<p>结合前面几篇来看：</p>
+<ul>
+<li><strong>这篇文章</strong>：提出虚拟细胞应该是什么，以及怎样建设；</li>
+<li><strong>X-Cell</strong>：尝试实现其中的“扰动后细胞状态预测”；</li>
+<li><strong>Systema</strong>：检查这些预测模型是否真的学到了不同基因的特异作用。</li>
+</ul>
+<p>因此，这篇文章更像是整个 <strong>AI 虚拟细胞领域的愿景书和建设路线图</strong>，而不是一个已经实现完整虚拟细胞的成果。</p></div>
 <div style="font-size:small;margin-top:8px;float:right;"></div>
 
 <button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>

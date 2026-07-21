@@ -397,7 +397,100 @@ $$</p>
 <li>
 <p><a href="https://www.biorxiv.org/content/10.64898/2026.05.07.723486v1" rel="nofollow">Spurious correlation inflates performance in single-cell perturbation prediction</a>，Nicol等，bioRxiv预印本，2026。这是对Systema及相关评测最直接的统计学补充：它把性能膨胀进一步分解为共享参考本身诱导的伪相关，并提出拆分参考进行修正。</p>
 </li>
-</ol></div>
+</ol>
+<h2>一句话概括</h2>
+<p>这篇论文不是又提出了一个“更强的虚拟细胞模型”，而是在提醒大家：</p>
+<blockquote>
+<p><strong>很多 AI 看起来很会预测基因实验结果，可能只是考试评分方式有漏洞。</strong></p>
+</blockquote>
+<p>作者提出了一套名为 <strong>Systema</strong> 的新评测框架，用来判断模型是否真的学会了“不同基因各自造成的影响”。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<hr>
+<h2>1. AI 在预测什么？</h2>
+<p>细胞里有成千上万个基因。研究人员可以用 CRISPR：</p>
+<ul>
+<li>关闭某个基因；</li>
+<li>激活某个基因；</li>
+<li>同时改变多个基因。</li>
+</ul>
+<p>然后观察细胞中哪些基因变活跃、哪些变安静。这种操作叫作<strong>基因扰动</strong>。</p>
+<p>AI 模型的任务是：</p>
+<blockquote>
+<p>输入“改变了哪个基因”，预测改变之后整个细胞的基因活动状态。</p>
+</blockquote>
+<p>这有助于理解基因功能、寻找药物靶点，也能减少需要真正进行的实验数量。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<hr>
+<h2>2. 论文发现了什么问题？</h2>
+<p>作者测试了 CPA、GEARS、scGPT 等模型，结果发现一个非常尴尬的现象：</p>
+<blockquote>
+<p>一个几乎不会推理的简单方法，表现竟然和复杂 AI 差不多，甚至更好。</p>
+</blockquote>
+<p>这个简单方法就是：</p>
+<blockquote>
+<p>不管你改变的是哪个基因，都预测成“所有受过扰动的细胞的平均状态”。</p>
+</blockquote>
+<p>相当于考试时，不管题目是什么，都填同一个“平均答案”，居然还能拿高分。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<hr>
+<h2>3. 为什么“平均答案”也能拿高分？</h2>
+<p>因为很多基因扰动都会造成一些共同变化，例如：</p>
+<ul>
+<li>细胞感到压力；</li>
+<li>生长速度变慢；</li>
+<li>细胞周期停止；</li>
+<li>DNA 损伤反应启动。</li>
+</ul>
+<p>于是，不管关闭的是基因 A、B 还是 C，细胞都会出现一部分相似的“通用反应”。</p>
+<p>传统评测通常拿扰动后的细胞与正常对照细胞比较：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">正常细胞 → 扰动后细胞
+</code></pre>
+<p>只要模型预测出了“细胞受到了打击”这个大方向，就可能获得很高分。</p>
+<p>但模型未必知道：</p>
+<pre lang="text" class="notranslate"><code class="notranslate">关闭基因 A 和关闭基因 B
+究竟有什么具体区别
+</code></pre>
+<p>作者把这种所有扰动都共有的变化称为 <strong>systematic variation，系统性变化</strong>。他们发现，数据中的系统性变化越强，模型在传统指标上的得分往往越高，说明部分高分可能是被数据偏差“抬起来”的。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<hr>
+<h2>4. Systema 怎么解决？</h2>
+<p>Systema 的核心思想很简单：</p>
+<blockquote>
+<p>不再只问“扰动细胞和正常细胞像不像”，而是问“模型能不能区分不同扰动”。</p>
+</blockquote>
+<p>可以类比为识别水果。</p>
+<p>旧评测问：</p>
+<blockquote>
+<p>模型能不能区分“水果”和“非水果”？</p>
+</blockquote>
+<p>模型只要知道所有水果都比较甜，就可能得高分。</p>
+<p>Systema 问：</p>
+<blockquote>
+<p>模型能不能分清苹果、香蕉和橙子？</p>
+</blockquote>
+<p>具体来说，Systema 会尽量减掉所有扰动共有的“平均变化”，把注意力放在每个基因独有的变化上；它还设计了 <strong>centroid accuracy</strong>，检查模型预测的结果究竟最接近正确的基因扰动，还是更像其他扰动。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<hr>
+<h2>5. 换了评测方法之后，结果怎样？</h2>
+<p>换成 Systema 后，大多数模型的成绩明显下降。</p>
+<p>这说明：</p>
+<blockquote>
+<p>预测一个从未见过的基因被改变后，细胞会如何反应，实际上比以前的排行榜显示得困难得多。</p>
+</blockquote>
+<p>微调后的 scGPT 在部分任务上稍好一些，尤其是预测核糖体、基因表达、DNA 复制等功能明确且彼此相关的基因，但总体能力仍然有限。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<hr>
+<h2>为什么这篇论文重要？</h2>
+<p>它揭示了虚拟细胞研究中的一个核心问题：</p>
+<blockquote>
+<p><strong>模型分数高，不等于模型真的理解了细胞。</strong></p>
+</blockquote>
+<p>未来评估 X-Cell、scGPT、GEARS 等扰动预测模型时，不能只看普通相关系数，而需要检查：</p>
+<ul>
+<li>是否只学到了细胞受扰动后的共同反应；</li>
+<li>是否能区分不同基因的具体作用；</li>
+<li>是否能预测真正没见过的基因；</li>
+<li>预测结果能否帮助寻找通路、药物靶点或细胞表型。</li>
+</ul>
+<p>作者最终强调，模型应该根据其<strong>真实生物学用途</strong>来评估，而不仅仅是根据基因表达预测分数。([<a href="https://www.nature.com/articles/s41587-025-02777-8" rel="nofollow">Nature</a>]<a href="https://www.nature.com/articles/s41587-025-02777-8" title="Systema: a framework for evaluating genetic perturbation response prediction beyond systematic variation | Nature Biotechnology" rel="nofollow">1</a>)</p>
+<h2>最核心的结论</h2>
+<blockquote>
+<p><strong>当前很多基因扰动预测模型，可能主要学会了“细胞被干预后通常会怎样”，却还没有真正学会“改变这个特定基因会怎样”。Systema 就是用来拆穿这种虚高成绩的。</strong></p>
+</blockquote></div>
 <div style="font-size:small;margin-top:8px;float:right;"></div>
 
 <button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
