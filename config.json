@@ -1,10 +1,10 @@
 {
   "title": "qbyang 的个人博客",
   "subTitle": "记录 Agent、LLM、强化学习与论文阅读",
-  "avatarUrl": "https://github.com/younglingi2003.png",
+  "avatarUrl": "https://github.com/powehi12.png",
   "displayTitle": "qbyang",
   "GMEEK_VERSION": "v2.25",
-  "email": "younglingi2003@users.noreply.github.com",
+  "email": "powehi12@users.noreply.github.com",
   "i18n": "CN",
   "UTC": 8,
   "themeMode": "fix",
@@ -14,6 +14,6 @@
   "onePageListNum": 10,
   "showPostSource": 1,
   "needComment": 1,
-  "allHead": "<link rel='stylesheet' href='https://younglingi2003.github.io/minimal-dark.css?v=20260715-color1'>",
-  "script": "<script src='https://younglingi2003.github.io/collapsible-toc.js'></script>"
+  "allHead": "<link rel='stylesheet' href='https://powehi12.github.io/minimal-dark.css?v=20260715-color1'>",
+  "script": "<script src='https://powehi12.github.io/collapsible-toc.js'></script>"
 }
